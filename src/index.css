@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+/* tailwindcss */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface-dim text-on-surface antialiased;
+    min-height: 100dvh;
+  }
+}
+
+@layer components {
+  .ghost-border {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #4F8EF7, #3B7BF0);
+  }
+}
+
+@keyframes breathe {
+  0% { transform: scale(1.0); }
+  100% { transform: scale(1.08); }
+}
+
+@keyframes glowBreathe {
+  0% { opacity: 0.08; }
+  100% { opacity: 0.16; }
+}
+
+.k-breathe {
+  animation: breathe 1.5s ease-in-out infinite alternate;
+}
+
+.glow-breathe {
+  animation: glowBreathe 1.5s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k-breathe,
+  .glow-breathe {
+    animation: none;
+  }
+}
