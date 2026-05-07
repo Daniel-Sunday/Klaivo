@@ -1,59 +1,31 @@
-import { Navigate } from 'react-router-dom'
-import { supabase, getProfile } from '../lib/supabase'
 import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 
-export default function ProtectedRoute({ children }) {
-  const [loading, setLoading] = useState(true)
-  const [onboardingComplete, setOnboardingComplete] = useState(false)
-  const [session, setSession] = useState(null)
+export function ProtectedRoute({ children, requirePro = false }) {
+  const [state, setState] = useState({ loading: true, session: null, profile: null })
 
   useEffect(() => {
-    const checkAuth = async () => {
-      console.log('ProtectedRoute: Checking auth status')
+    let mounted = true
+    async function init() {
       const { data: { session } } = await supabase.auth.getSession()
-      console.log('ProtectedRoute: Session:', session?.user?.id)
-      setSession(session)
-
-      if (session) {
-        const { data: profile, error } = await getProfile(session.user.id)
-        console.log('ProtectedRoute: Profile check:', { profile, error, onboarding_complete: profile?.onboarding_complete })
-        setOnboardingComplete(profile?.onboarding_complete || false)
-      }
-
-      setLoading(false)
+      if (!session || !mounted) { setState({ loading: false, session: null, profile: null }); return }
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
+      if (mounted) setState({ loading: false, session, profile })
     }
-
-    checkAuth()
-
-    // Add periodic re-check to detect changes
-    const interval = setInterval(async () => {
-      console.log('ProtectedRoute: Periodic check')
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        const { data: profile } = await getProfile(session.user.id)
-        console.log('ProtectedRoute: Periodic profile check:', { onboarding_complete: profile?.onboarding_complete })
-        setOnboardingComplete(profile?.onboarding_complete || false)
-      }
-    }, 2000)
-
-    return () => clearInterval(interval)
+    init()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => init())
+    return () => { mounted = false; subscription.unsubscribe() }
   }, [])
 
-  if (loading) {
-    console.log('ProtectedRoute: Still loading')
-    return <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center text-[#F0F0F5]">Loading...</div>
-  }
+  if (state.loading) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A0A0F' }}>
+      <div className="text-4xl font-bold animate-pulse" style={{ color: '#4F8EF7', fontFamily: 'Manrope, sans-serif' }}>K</div>
+    </div>
+  )
 
-  if (!session) {
-    console.log('ProtectedRoute: No session, redirecting to /')
-    return <Navigate to="/" />
-  }
-
-  if (!onboardingComplete) {
-    console.log('ProtectedRoute: Onboarding not complete, redirecting to /onboarding')
-    return <Navigate to="/onboarding" />
-  }
-
-  console.log('ProtectedRoute: All checks passed, rendering children')
+  if (!state.session) return <Navigate to="/" replace />
+  if (state.session && !state.profile?.onboarding_complete) return <Navigate to="/onboarding" replace />
+  if (requirePro && !state.profile?.is_pro) return <Navigate to="/upgrade" replace />
   return children
 }

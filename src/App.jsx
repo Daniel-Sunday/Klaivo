@@ -11,7 +11,7 @@ import QuizPage from './pages/QuizPage.jsx'
 import HistoryPage from './pages/HistoryPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
-import ProtectedRoute from './components/ProtectedRoute.jsx'
+import { ProtectedRoute } from './components/ProtectedRoute.jsx'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -70,9 +70,9 @@ export default function App() {
           <Route path="/onboarding" element={<OnboardingPage session={session} />} />
           <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/home" element={<ProtectedRoute><WelcomePage /></ProtectedRoute>} />
-          <Route path="/result" element={<ProtectedRoute><ResultPage /></ProtectedRoute>} />
-          <Route path="/flashcards" element={<ProtectedRoute><FlashcardsPage /></ProtectedRoute>} />
-          <Route path="/quiz" element={<ProtectedRoute><QuizPage /></ProtectedRoute>} />
+          <Route path="/result/:sessionId" element={<ProtectedRoute><ResultPage /></ProtectedRoute>} />
+          <Route path="/flashcards/:sessionId" element={<ProtectedRoute><FlashcardsPage /></ProtectedRoute>} />
+          <Route path="/quiz/:sessionId" element={<ProtectedRoute><QuizPage /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
           <Route path="/about" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

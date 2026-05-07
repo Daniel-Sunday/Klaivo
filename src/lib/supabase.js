@@ -15,20 +15,19 @@ export async function getProfile(userId) {
 
 // Upsert profile on sign in
 export async function upsertProfile(user) {
-  const firstName = user.user_metadata?.full_name?.split(' ')[0]
-    || user.email?.split('@')[0]
-    || 'there'
+  const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Student'
+  // Clean up email prefixes like john.doe -> John
+  const firstName = rawName.includes('@') 
+    ? rawName.split('@')[0].split('.')[0] 
+    : rawName.split(' ')[0]
+  const cleanFirst = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .upsert({
-      id: user.id,
-      email: user.email,
-      first_name: firstName,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' })
-    .select()
-    .maybeSingle()
+  const { data, error } = await supabase.from('profiles').upsert({
+    id: user.id,
+    email: user.email,
+    first_name: cleanFirst,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'id', ignoreDuplicates: false }).select().single()
   return { data, error }
 }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase, getProfile, incrementSession } from '../lib/supabase'
+import { supabase, getProfile } from '../lib/supabase'
 
 const ACADEMIC_LEVELS = [
   'Secondary School',
@@ -78,9 +78,6 @@ export default function OnboardingPage({ session }) {
 
       if (!error && data && data.onboarding_complete) {
         console.log('Upsert successful, navigating to /home')
-        
-        await incrementSession(session.user.id)
-        console.log('Incremented session, navigating to /home')
         
         // Force navigation with window.location as fallback
         setTimeout(() => {

@@ -1,17 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase, getProfile, checkDailyLimit, incrementDailyCount } from '../lib/supabase'
+import { supabase, getProfile } from '../lib/supabase'
+import { getGreeting } from '../lib/greeting'
 import { useStudy } from '../context/StudyContext'
 import BottomSheet from '../components/BottomSheet'
 import SideDrawer from '../components/SideDrawer'
-
-const GREETINGS = [
-  { main: "Welcome back, ", sub: "Let's get to work." },
-  { main: "Good to have you back, ", sub: "What's on your plate today?" },
-  { main: "Back again, ", sub: "What are we conquering today?" },
-  { main: "Hey ", sub: "Ready to make today count?" },
-  { main: " is back.", sub: "Let's build something brilliant today." },
-]
 
 const MODES = [
   { id: 'understand', label: 'Understand', icon: 'psychology' },
@@ -45,8 +38,7 @@ export default function WelcomePage() {
     loadProfile()
   }, [])
 
-  const greetingIndex = profile?.greeting_index || 0
-  const greeting = GREETINGS[greetingIndex]
+  const greeting = getGreeting(firstName)
 
   const handleSend = async () => {
     if (topic.length < 10) return
@@ -54,14 +46,6 @@ export default function WelcomePage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { canAnswer, remaining } = await checkDailyLimit(user.id)
-    if (!canAnswer) {
-      setShowLimitMessage(true)
-      setTimeout(() => setShowLimitMessage(false), 4000)
-      return
-    }
-
-    await incrementDailyCount(user.id)
     setTopic(topic)
     setSelectedMode(selectedMode)
     setUploadedFile(uploadedFile)
