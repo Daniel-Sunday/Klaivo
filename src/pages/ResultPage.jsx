@@ -16,7 +16,7 @@ export default function ResultPage() {
     load()
   }, [sessionId])
 
-  if (loading) return <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center text-[#F0F0F5]">Loading...</div>
+  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A0A0F' }}><img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" /></div>
   if (!sessionData) return <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center text-[#F0F0F5]">Session not found</div>
 
   return <div className="min-h-screen bg-[#0A0A0F] text-[#F0F0F5]">Result Page - Session: {sessionData.topic}</div>

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /home
+Disallow: /result
+Disallow: /admin
+Sitemap: https://klaivo.app/sitemap.xml

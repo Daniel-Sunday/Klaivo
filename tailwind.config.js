@@ -30,6 +30,10 @@ module.exports = {
         xl: "0.75rem",
         full: "9999px",
       },
+      padding: {
+        'safe-top': 'env(safe-area-inset-top, 0px)',
+        'safe-bottom': 'env(safe-area-inset-bottom, 0px)',
+      }
     },
   },
   plugins: [],

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase, getProfile } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 
 const ACADEMIC_LEVELS = [
   'Secondary School',
@@ -18,42 +19,38 @@ const HEADINGS = {
   'Postgraduate': 'Deep research. Complex concepts. I work at your level.'
 }
 
-export default function OnboardingPage({ session }) {
+export default function OnboardingPage() {
   const navigate = useNavigate()
+  const { session, profile, loading: authLoading, refreshProfile } = useAuth()
   const [screen, setScreen] = useState(1)
   const [loading, setLoading] = useState(false)
   const [selectedLevel, setSelectedLevel] = useState('')
-  const [firstName, setFirstName] = useState('')
 
   useEffect(() => {
-    const checkOnboarding = async () => {
-      if (!session?.user) return
-
-      console.log('Checking onboarding status for user:', session.user.id)
-      const { data: profile, error } = await getProfile(session.user.id)
-      console.log('Profile check result:', { profile, error })
-      
-      if (profile?.onboarding_complete) {
-        console.log('Onboarding already complete, navigating to /home')
-        navigate('/home')
-      } else {
-        console.log('Onboarding not complete, setting first name')
-        setFirstName(profile?.first_name || 'there')
-      }
+    // Only redirect if profile is loaded and onboarding is complete
+    // Don't block render while auth is loading
+    if (profile?.onboarding_complete) {
+      console.log('Onboarding already complete, navigating to /home')
+      navigate('/home')
     }
+  }, [profile, navigate])
 
-    checkOnboarding()
-  }, [session, navigate])
-
-  const handleLevelSelect = async (level) => {
+  const handleLevelSelect = (level) => {
     setSelectedLevel(level)
 
-    await supabase
+    // Fire Supabase save in background without awaiting
+    supabase
       .from('profiles')
       .update({ academic_level: level })
       .eq('id', session.user.id)
+      .then(({ error }) => {
+        if (error) console.error('Failed to save academic level:', error)
+      })
 
-    setScreen(3)
+    // Transition to Screen 3 after 500ms delay
+    setTimeout(() => {
+      setScreen(3)
+    }, 500)
   }
 
   const handleCompleteOnboarding = async () => {
@@ -78,6 +75,8 @@ export default function OnboardingPage({ session }) {
 
       if (!error && data && data.onboarding_complete) {
         console.log('Upsert successful, navigating to /home')
+        refreshProfile() // Profile will refresh naturally through onAuthStateChange - no await
+        setLoading(false)
         
         // Force navigation with window.location as fallback
         setTimeout(() => {
@@ -98,6 +97,14 @@ export default function OnboardingPage({ session }) {
     }
   }
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A0A0F' }}>
+        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" />
+      </div>
+    )
+  }
+
   if (!session) {
     return (
       <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center text-[#F0F0F5]">
@@ -112,14 +119,12 @@ export default function OnboardingPage({ session }) {
         <div className="flex flex-col items-center justify-center space-y-8 text-center">
           <div className="relative">
             <div className="absolute inset-0 bg-[rgba(79,142,247,0.08)] rounded-full w-40 h-40 blur-[40px] glow-breathe" />
-            <span className="relative text-[72px] font-extrabold text-[#4F8EF7] k-breathe font-['Manrope']">
-              K
-            </span>
+            <img src="/logo.svg" alt="Klaivo" className="relative w-20 h-20 k-breathe" />
           </div>
 
           <div className="space-y-4">
             <p className="text-[32px] font-bold text-[#F0F0F5] font-['Manrope']" style={{ animationDelay: '800ms', animation: 'fadeIn 0.5s ease-out forwards', opacity: 0 }}>
-              Hey {firstName}.
+              Hey {profile?.first_name || 'there'}.
             </p>
             <p className="text-[16px] text-[#6B6B80] font-['Inter'] max-w-xs" style={{ animationDelay: '1400ms', animation: 'fadeIn 0.5s ease-out forwards', opacity: 0 }}>
               I'm Klaivo. I've been waiting for someone like you.
@@ -139,9 +144,7 @@ export default function OnboardingPage({ session }) {
       {screen === 2 && (
         <div className="flex flex-col items-center justify-center space-y-8 text-center max-w-sm w-full">
           <div className="space-y-4">
-            <span className="text-[32px] font-extrabold text-[#4F8EF7] font-['Manrope']">
-              K
-            </span>
+            <img src="/logo.svg" alt="Klaivo" className="w-12 h-12" />
             <p className="text-[24px] font-bold text-[#F0F0F5] font-['Manrope']">
               One quick thing.
             </p>
@@ -172,9 +175,7 @@ export default function OnboardingPage({ session }) {
         <div className="flex flex-col items-center justify-center space-y-8 text-center max-w-sm w-full">
           <div className="relative">
             <div className="absolute inset-0 bg-[rgba(79,142,247,0.08)] rounded-full w-32 h-32 blur-[40px] glow-breathe" />
-            <span className="relative text-[48px] font-extrabold text-[#4F8EF7] k-breathe font-['Manrope']">
-              K
-            </span>
+            <img src="/logo.svg" alt="Klaivo" className="relative w-16 h-16 k-breathe" />
           </div>
 
           <div className="space-y-4">
