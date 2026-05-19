@@ -30,8 +30,8 @@ export default function OnboardingPage() {
     // Only redirect if profile is loaded and onboarding is complete
     // Don't block render while auth is loading
     if (profile?.onboarding_complete) {
-      console.log('Onboarding already complete, navigating to /home')
-      navigate('/home')
+      console.log('Onboarding already complete, navigating to /welcome')
+      navigate('/welcome')
     }
   }, [profile, navigate])
 
@@ -74,17 +74,17 @@ export default function OnboardingPage() {
       console.log('Onboarding upsert result:', { data, error, userId: session.user.id })
 
       if (!error && data && data.onboarding_complete) {
-        console.log('Upsert successful, navigating to /home')
+        console.log('Upsert successful, navigating to /welcome')
         refreshProfile() // Profile will refresh naturally through onAuthStateChange - no await
         setLoading(false)
         
         // Force navigation with window.location as fallback
         setTimeout(() => {
           console.log('Using window.location fallback')
-          window.location.href = '/home'
+          window.location.href = '/welcome'
         }, 1000)
         
-        navigate('/home')
+        navigate('/welcome')
       } else {
         console.error('Upsert failed:', { data, error })
         setLoading(false)

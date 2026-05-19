@@ -94,7 +94,7 @@ export default function WelcomePage() {
           {/* Greeting - Bold and Heavy */}
           <div className="mb-8 w-full text-center">
             <h1 className="font-['Manrope',sans-serif] font-bold text-3xl md:text-4xl tracking-tight leading-tight mb-2 text-[#F0F0F5]">
-              {greetingIndex === 4 ? `${firstName}${greeting.main}` : `${greeting.main}${firstName}`}<br/>
+              {greeting.main}{firstName}<br/>
               <span className="text-[#c2c6d5] font-medium text-2xl md:text-3xl">{greeting.sub}</span>
             </h1>
           </div>
