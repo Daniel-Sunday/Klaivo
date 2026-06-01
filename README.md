@@ -1,16 +1,39 @@
-# React + Vite
+# Klaivo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AI study companion for students who have stopped trying but haven't stopped caring.
 
-Currently, two official plugins are available:
+Not the top student. The one using ChatGPT to finish the assignment and learning nothing. The one who gets an answer and still does not understand. Klaivo is built for that student.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## The Problem
 
-## React Compiler
+Every AI tool gives students the answer and leaves them. It answers fast. They feel smart. They close the app believing they are ready. But the AI never tested them. Never found the gaps. It optimized for the feeling of learning, not the thing itself.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## What Klaivo Does
 
-## Expanding the ESLint configuration
+Klaivo pulls the thinking out of the student. No prompting. No crafting. The AI meets them where they are and forces comprehension — not shortcuts it.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and `[typescript-eslint](https://typescript-eslint.io)` in your project.
+Four modes built around how students actually learn:
+- Understand — deep comprehension, not summaries
+- Write — structured drafting with examiner awareness
+- Prepare — exam strategy and model answers
+- Revise — retention, not re-reading
+
+Every response is calibrated to 6 academic levels — from WAEC and UTME to professional certifications (ICAN, ACCA, IELTS, MDCN, Nigerian Law School).
+
+## Stack
+
+- React + Vite + TypeScript + Tailwind (frontend)
+- Supabase (database, auth, storage, pgvector for RAG)
+- Vercel Edge Functions (all API calls — keys never touch the browser)
+- Claude Sonnet (complex reasoning, Write mode, deep answers)
+- Gemini 2.5 Flash (lighter tasks, follow-ups, image reading)
+- Paystack + Stripe (payments)
+- PWA-first
+
+## Status
+
+V1 in active development. Built alone in Owerri, Nigeria.
+
+## Built by
+
+Daniel Chibuihe Sunday — 19-year-old founder and brand identity designer building the AI study tool he needed and never had.
