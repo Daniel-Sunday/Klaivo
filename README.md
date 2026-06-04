@@ -22,7 +22,7 @@ Every response is calibrated to 6 academic levels — from WAEC and UTME to prof
 
 ## Stack
 
-- React + Vite + JavaScript + Tailwind (frontend)
+- React + Vite + TypeScript + Tailwind (frontend)
 - Supabase (database, auth, storage, pgvector for RAG)
 - Vercel Edge Functions (all API calls — keys never touch the browser)
 - Claude Sonnet (complex reasoning, Write mode, deep answers)
