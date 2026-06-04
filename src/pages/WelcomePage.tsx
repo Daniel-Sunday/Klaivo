@@ -65,7 +65,7 @@ export default function WelcomePage() {
   return (
     <div className="bg-[#0A0A0F] text-[#e4e1e9] font-['Inter',sans-serif] antialiased min-h-screen flex flex-col selection:bg-[#508ff8] selection:text-white">
       {/* Top Navigation */}
-      <header className="fixed top-0 w-full z-50 bg-[#0A0A0F]/60 backdrop-blur-xl border-b border-white/5 shadow-none">
+      <header className="fixed top-0 w-full z-50 bg-[#0A0A0F]/60 backdrop-blur-xl border-b border-white/5 shadow-none pt-safe-top">
         <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
           {/* Left-aligned Hamburger and K Logo */}
           <div className="flex items-center gap-4">
@@ -115,7 +115,7 @@ export default function WelcomePage() {
         </div>
 
         {/* AI Input Area at Bottom - Sticky */}
-        <div className="w-full mt-8 relative sticky bottom-0">
+        <div className="w-full mt-8 relative sticky bottom-0 pb-safe-bottom">
           <div 
             className="bg-[#1b1b20] rounded-2xl transition-all duration-300 overflow-hidden flex flex-col relative focus-within:border-[#508ff8] focus-within:shadow-[0_0_0_4px_rgba(80,143,248,0.2)] focus-within:transform focus-within:-translate-y-2"
             style={{ border: '1px solid rgba(255, 255, 255, 0.12)' }}
