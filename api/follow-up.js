@@ -51,6 +51,10 @@ Rules:
       }
     )
 
+    if (!geminiResponse.ok) {
+      throw new Error(`Gemini API error: ${geminiResponse.status}`)
+    }
+
     const data = await geminiResponse.json()
     const answer = data.candidates[0].content.parts[0].text
 

@@ -26,7 +26,7 @@ function selectModel(mode, level, depth, subjectType) {
     subjectType === 'mathematical'
 
   return needsSonnet
-    ? { model: 'claude-sonnet-4-6', provider: 'anthropic', maxTokens: 2000 }
+    ? { model: 'claude-3-5-sonnet-latest', provider: 'anthropic', maxTokens: 2000 }
     : { model: 'gemini-2.5-flash', provider: 'gemini', maxTokens: 1500 }
 }
 

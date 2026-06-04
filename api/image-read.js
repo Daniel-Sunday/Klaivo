@@ -29,6 +29,10 @@ export default async function handler(req) {
     }
   )
 
+  if (!geminiResponse.ok) {
+    throw new Error(`Gemini API error: ${geminiResponse.status}`)
+  }
+
   const data = await geminiResponse.json()
   const clean = data.candidates[0].content.parts[0].text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
   return new Response(clean, { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } })

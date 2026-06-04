@@ -23,8 +23,12 @@ export default async function handler(req) {
   const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.CLAUDE_API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: type === 'simplify' ? 1000 : 2200, system: systemPrompt, messages: [{ role: 'user', content: userMessage }] })
+    body: JSON.stringify({ model: 'claude-3-5-sonnet-latest', max_tokens: type === 'simplify' ? 1000 : 2200, system: systemPrompt, messages: [{ role: 'user', content: userMessage }] })
   })
+
+  if (!claudeResponse.ok) {
+    throw new Error(`Claude API error: ${claudeResponse.status}`)
+  }
 
   const data = await claudeResponse.json()
   const clean = data.content[0].text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
