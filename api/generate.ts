@@ -3,13 +3,8 @@ export const config = { runtime: 'edge' };
 import { verifyAuth } from './_utils/auth';
 import { sanitizeInput } from './_utils/sanitize';
 import { checkAndIncrementRateLimit } from './_utils/rateLimit';
+import { getCorsHeaders, handleCors } from './_utils/cors';
 import { createClient } from '@supabase/supabase-js';
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': 'https://klaivo.app',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
 
 interface ModelSelection {
   model: string;
@@ -18,6 +13,11 @@ interface ModelSelection {
 }
 
 function selectModel(mode: string, level: string, depth: string, subjectType: string): ModelSelection {
+  // Flashcards and quizzes are lightweight — always use Gemini Flash
+  if (mode === 'flashcards' || mode === 'quiz') {
+    return { model: 'gemini-2.5-flash', provider: 'gemini', maxTokens: 1000 };
+  }
+
   const needsSonnet =
     mode === 'write' ||
     level === 'postgrad' ||
@@ -32,21 +32,22 @@ function selectModel(mode: string, level: string, depth: string, subjectType: st
 }
 
 export default async function handler(req: Request): Promise<Response> {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
-  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+  const cors = getCorsHeaders(req);
 
-  const body = await req.json();
-  if (body.mode === 'flashcards' || body.mode === 'quiz') {
-    return new Response(JSON.stringify({ error: 'Use /api/flashcards-quiz for Pro features' }), { status: 400, headers: CORS_HEADERS });
+  if (req.method !== 'POST') {
+    return new Response('Method not allowed', { status: 405, headers: cors });
   }
 
   try {
     const { user, error: authError, supabase } = await verifyAuth(req);
     if (authError || !user || !supabase) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: cors });
     }
 
-    const { systemPrompt, userMessage, mode, level, topic, depth, subjectType, imageBase64 } = body;
+    const body = await req.json();
+    const { systemPrompt, userMessage, mode, level, topic, depth, subjectType, imageBase64, maxTokens: clientMaxTokens } = body;
 
     // Sanitize
     const cleanTopic = sanitizeInput(topic || '', 600);
@@ -54,7 +55,7 @@ export default async function handler(req: Request): Promise<Response> {
     // Server-side rate limit
     const { allowed } = await checkAndIncrementRateLimit(supabase, user.id);
     if (!allowed) {
-      return new Response(JSON.stringify({ error: 'RATE_LIMIT_EXCEEDED' }), { status: 429, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'RATE_LIMIT_EXCEEDED' }), { status: 429, headers: cors });
     }
 
     // Server-side free limit check — 2 uses per 8-day window (rolling)
@@ -72,7 +73,7 @@ export default async function handler(req: Request): Promise<Response> {
       const inWindow = windowStart && windowStart > eightDaysAgo;
 
       if (inWindow && (profileData.total_uses_used || 0) >= 2) {
-        return new Response(JSON.stringify({ error: 'FREE_LIMIT_REACHED' }), { status: 402, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'FREE_LIMIT_REACHED' }), { status: 402, headers: cors });
       }
 
       // Reset window if expired
@@ -87,7 +88,7 @@ export default async function handler(req: Request): Promise<Response> {
     // Check cache (skip for image queries)
     if (!imageBase64) {
       const normalized = cleanTopic.toLowerCase().replace(/\s+/g, ' ').trim();
-      const cacheKey = `${normalized}|${mode}|${level}|${depth || 'solid'}|${subjectType || 'conceptual'}`; 
+      const cacheKey = `${normalized}|${mode}|${level}|${depth || 'solid'}|${subjectType || 'conceptual'}`;
       const { data: cached } = await supabase
         .from('answer_cache')
         .select('result_json, hit_count')
@@ -108,13 +109,15 @@ export default async function handler(req: Request): Promise<Response> {
 
         return new Response(
           JSON.stringify({ result: cached.result_json, fromCache: true }),
-          { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+          { headers: { ...cors, 'Content-Type': 'application/json' } }
         );
       }
     }
 
     // Select model based on task complexity
-    const { model, provider, maxTokens } = selectModel(mode, level, depth, subjectType);
+    const selected = selectModel(mode, level, depth, subjectType);
+    const maxTokens = clientMaxTokens || selected.maxTokens;
+    const { model, provider } = selected;
 
     // Build message content
     const content = imageBase64
@@ -173,7 +176,7 @@ export default async function handler(req: Request): Promise<Response> {
     // Save to cache (not for image queries)
     if (!imageBase64) {
       const normalized = cleanTopic.toLowerCase().replace(/\s+/g, ' ').trim();
-      const cacheKey = `${normalized}|${mode}|${level}|${depth || 'solid'}|${subjectType || 'conceptual'}`; 
+      const cacheKey = `${normalized}|${mode}|${level}|${depth || 'solid'}|${subjectType || 'conceptual'}`;
       await serviceSupabase.from('answer_cache').upsert({
         cache_key: cacheKey,
         topic_normalized: normalized,
@@ -195,11 +198,12 @@ export default async function handler(req: Request): Promise<Response> {
 
     return new Response(
       JSON.stringify({ result, fromCache: false, modelUsed: model }),
-      { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+      { headers: { ...cors, 'Content-Type': 'application/json' } }
     );
 
   } catch (err: any) {
+    const cors = getCorsHeaders(req);
     const status = err.message === 'INVALID_INPUT' ? 400 : 500;
-    return new Response(JSON.stringify({ error: err.message }), { status, headers: CORS_HEADERS });
+    return new Response(JSON.stringify({ error: err.message }), { status, headers: cors });
   }
 }

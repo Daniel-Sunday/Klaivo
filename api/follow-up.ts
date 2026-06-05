@@ -1,28 +1,31 @@
 export const config = { runtime: 'edge' };
+
 import { verifyAuth } from './_utils/auth';
 import { sanitizeInput } from './_utils/sanitize';
 import { checkAndIncrementRateLimit } from './_utils/rateLimit';
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': 'https://klaivo.app',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-};
+import { getCorsHeaders, handleCors } from './_utils/cors';
 
 export default async function handler(req: Request): Promise<Response> {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
-  const { user, error: authError, supabase } = await verifyAuth(req);
-  if (authError || !user || !supabase) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+  const cors = getCorsHeaders(req);
+
+  if (req.method !== 'POST') {
+    return new Response('Method not allowed', { status: 405, headers: cors });
   }
 
   try {
+    const { user, error: authError, supabase } = await verifyAuth(req);
+    if (authError || !user || !supabase) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: cors });
+    }
+
     const { question, originalFullAnswer, originalTopic, conversationHistory = [] } = await req.json();
     const cleanQuestion = sanitizeInput(question, 500);
 
     const { allowed } = await checkAndIncrementRateLimit(supabase, user.id);
     if (!allowed) {
-      return new Response(JSON.stringify({ error: 'RATE_LIMIT_EXCEEDED' }), { status: 429, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'RATE_LIMIT_EXCEEDED' }), { status: 429, headers: cors });
     }
 
     // Build conversation messages with history
@@ -66,8 +69,12 @@ Rules:
     const data = await geminiResponse.json();
     const answer = data.candidates[0].content.parts[0].text;
 
-    return new Response(JSON.stringify({ answer }), { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: 'Something went wrong' }), { status: 500, headers: CORS_HEADERS });
+    return new Response(
+      JSON.stringify({ result: answer }),
+      { headers: { ...cors, 'Content-Type': 'application/json' } }
+    );
+  } catch (err: any) {
+    const cors = getCorsHeaders(req);
+    return new Response(JSON.stringify({ error: err.message || 'Something went wrong' }), { status: 500, headers: cors });
   }
 }
