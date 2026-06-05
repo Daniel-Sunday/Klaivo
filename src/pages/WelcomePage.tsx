@@ -125,6 +125,7 @@ export default function WelcomePage() {
               placeholder="e.g. I need help understanding Integration by Parts..."
               value={topic}
               onChange={(e) => setTopicLocal(e.target.value)}
+              maxLength={500}
             />
             {/* Input Toolbar */}
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
