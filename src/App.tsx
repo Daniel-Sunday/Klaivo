@@ -23,7 +23,7 @@ export default function App() {
             <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/home" element={<ProtectedRoute><WelcomePage /></ProtectedRoute>} />
             <Route path="/result/:sessionId" element={<ProtectedRoute><ResultPage /></ProtectedRoute>} />
-            <Route path="/flashcards/:sessionId" element={<ProtectedRoute><FlashcardsPage /></ProtectedRoute>} />
+            <Route path="/flashcards/:sessionId" element={<ProtectedRoute requirePro><FlashcardsPage /></ProtectedRoute>} />
             <Route path="/quiz/:sessionId" element={<ProtectedRoute><QuizPage /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
             <Route path="/about" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />

@@ -215,13 +215,14 @@ interface FlashcardsPromptOptions {
   level: 'secondary' | '100_200' | '300_400' | '500_600' | 'postgrad'
   mode: string
   resultSummary: string
+  depth?: 'basics' | 'solid' | 'full' | 'exam'
 }
 
-export function buildFlashcardsPrompt({ topic, level, mode, resultSummary }: FlashcardsPromptOptions) {
-  // Dynamic count: 4 for basics, 6 for solid, 8 for full/exam
+export function buildFlashcardsPrompt({ topic, level, mode, resultSummary, depth }: FlashcardsPromptOptions) {
+  const count = depth === 'basics' ? 4 : (depth === 'full' ? 8 : 6);
   return {
-    systemPrompt: `You are Klaivo. Generate study flashcards for a student. Return ONLY a valid JSON array. Each object: {"question": "...", "answer": "..."}. Questions test core understanding — not trivia. Answers are 1-3 sentences: complete but concise. Level: ${LEVEL_CONTEXT[level]?.label || 'university student'}.`,
-    userMessage: `Topic: ${topic}\nMode this was studied in: ${mode}\nKey content: ${resultSummary.slice(0, 600)}\n\nGenerate 6 study flashcards.`
+    systemPrompt: `You are Klaivo. Generate study flashcards for a student. Return ONLY a valid JSON array of exactly ${count} objects. Each object: {"question": "...", "answer": "..."}. Questions test core understanding — not trivia. Answers are 1-3 sentences: complete but concise. Level: ${LEVEL_CONTEXT[level]?.label || 'university student'}.`,
+    userMessage: `Topic: ${topic}\nMode this was studied in: ${mode}\nKey content: ${resultSummary.slice(0, 600)}\n\nGenerate exactly ${count} study flashcards.`
   }
 }
 
