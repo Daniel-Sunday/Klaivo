@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, getProfile } from '../lib/supabase';
-import { generateAnswer } from '../lib/api';
+import { generateAnswer, readImage } from '../lib/api';
 import { buildStudyPrompt, analysePrompt } from '../lib/promptBuilder';
 
 interface BottomSheetProps {
@@ -10,6 +10,8 @@ interface BottomSheetProps {
   topic: string;
   selectedMode: 'understand' | 'write' | 'prepare' | 'revise' | any;
   uploadedFile: File | null;
+  uploadedFileUrl: string | null;
+  uploadedImageBase64: string | null;
 }
 
 interface Question {
@@ -220,7 +222,7 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
-export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uploadedFile }: BottomSheetProps) {
+export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uploadedFile, uploadedFileUrl, uploadedImageBase64 }: BottomSheetProps) {
   const navigate = useNavigate();
   const [sheetState, setSheetState] = useState<'questions' | 'generating' | 'error'>('questions');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -230,6 +232,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
   const [currentMessage, setCurrentMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [profile, setProfile] = useState<any>(null);
+  const [isReadingImageState, setIsReadingImageState] = useState(false);
 
   const mode = selectedMode || 'understand';
   const currentQuestions = QUESTIONS_BY_MODE[mode] || QUESTIONS_BY_MODE.understand;
@@ -270,7 +273,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
 
   // Looping generating messages hook
   useEffect(() => {
-    if (sheetState !== 'generating') return;
+    if (sheetState !== 'generating' || isReadingImageState) return;
     let index = 0;
     const detected = analysePrompt(topic);
     const emotional = answers.emotional || detected.level || 'curious';
@@ -285,7 +288,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
       setCurrentMessage(messages[index]);
     }, 2200);
     return () => clearInterval(interval);
-  }, [sheetState]);
+  }, [sheetState, isReadingImageState]);
 
   const handlePillSelect = (optionId: string) => {
     const q = currentQuestions[currentQuestionIndex];
@@ -348,9 +351,26 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
 
       const finalDepth = finalAnswers.depth || detected.depth || 'solid';
 
-      let uploadedImageBase64: string | null = null;
-      if (uploadedFile) {
-        uploadedImageBase64 = await fileToBase64(uploadedFile);
+      let activeImageBase64 = uploadedImageBase64;
+      if (!activeImageBase64 && uploadedFile) {
+        activeImageBase64 = await fileToBase64(uploadedFile);
+      }
+
+      if (activeImageBase64) {
+        setIsReadingImageState(true);
+        setCurrentMessage("Reading your image...");
+        try {
+          await readImage({
+            imageBase64: activeImageBase64,
+            mediaType: uploadedFile ? uploadedFile.type : 'image/jpeg'
+          });
+        } catch (imageErr) {
+          console.error("Image read failed:", imageErr);
+          throw new Error("Failed to read image. Please try again.");
+        }
+        setCurrentMessage("Building your answer from what I found...");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setIsReadingImageState(false);
       }
 
       // Constructed studyContext matching Step 5 exactly
@@ -365,7 +385,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
         urgency: finalAnswers.urgency || detectedUrgency,
         subjectType: finalAnswers.subjectType || detectedSubjectType,
         essayQuestion: finalAnswers.essay_question || null,
-        uploadedImageBase64: uploadedImageBase64 || null,
+        uploadedImageBase64: activeImageBase64 || null,
         uploadedMediaType: uploadedFile ? uploadedFile.type : 'image/jpeg',
       };
 
@@ -409,7 +429,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
         emotional_context: studyContext.emotionalContext,
         result_json: response.result,
         essay_question: studyContext.essayQuestion,
-        uploaded_file_url: null
+        uploaded_file_url: uploadedFileUrl || null
       }).select().single();
 
       if (sessionError) {

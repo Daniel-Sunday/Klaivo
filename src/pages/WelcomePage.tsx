@@ -12,6 +12,17 @@ const MODES = [
   { id: 'revise', label: 'Revise', icon: 'history_edu' },
 ];
 
+async function uploadImageToStorage(file: File, userId: string): Promise<{ path: string; publicUrl: string }> {
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  const path = `${userId}/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('klaivo-uploads')
+    .upload(path, file, { contentType: file.type, upsert: false });
+  if (error) throw error;
+  const { data: { publicUrl } } = supabase.storage.from('klaivo-uploads').getPublicUrl(path);
+  return { path, publicUrl };
+}
+
 export default function WelcomePage() {
   const { setTopic, setSelectedMode, setUploadedFile } = useStudy();
   const [firstName, setFirstName] = useState<string>('');
@@ -23,10 +34,19 @@ export default function WelcomePage() {
   const [showSideDrawer, setShowSideDrawer] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Overhauled upload states
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
+  const [uploadedImageBase64, setUploadedImageBase64] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
   useEffect(() => {
     const loadProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        setUserId(user.id);
         const { data: profileData } = await getProfile(user.id);
         setFirstName(profileData?.first_name || 'there');
       }
@@ -34,10 +54,20 @@ export default function WelcomePage() {
     loadProfile();
   }, []);
 
+  // Toast automatic dismiss effect
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
   const greeting = getGreeting(firstName);
 
   const handleSend = async () => {
-    if (topic.length < 10) return;
+    if (topic.length < 10 || isUploading) return;
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -48,15 +78,71 @@ export default function WelcomePage() {
     setShowBottomSheet(true);
   };
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setUploadedFileLocal(file);
+    if (!file) return;
+
+    // Max file size check: 10MB
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      setToastMessage("Image too large — maximum 10MB");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    setUploadedFileLocal(file);
+    setUploadedFile(file);
+
+    // Read as base64 for API call
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        const base64String = reader.result.split(',')[1];
+        setUploadedImageBase64(base64String);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Create local object URL for preview
+    const preview = URL.createObjectURL(file);
+    setPreviewUrl(preview);
+
+    // Upload to Supabase Storage immediately
+    try {
+      setIsUploading(true);
+      let activeUserId = userId;
+      if (!activeUserId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          activeUserId = user.id;
+          setUserId(user.id);
+        }
+      }
+      if (!activeUserId) {
+        throw new Error("User session not found. Please log in again.");
+      }
+      const { publicUrl } = await uploadImageToStorage(file, activeUserId);
+      setUploadedFileUrl(publicUrl);
+    } catch (err: any) {
+      console.error(err);
+      setToastMessage(err.message || "Failed to upload image to storage");
+      handleRemoveFile();
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleRemoveFile = () => {
     setUploadedFileLocal(null);
+    setUploadedFile(null);
+    setUploadedFileUrl(null);
+    setUploadedImageBase64(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -120,6 +206,31 @@ export default function WelcomePage() {
             className="bg-[#1b1b20] rounded-2xl transition-all duration-300 overflow-hidden flex flex-col relative focus-within:border-[#508ff8] focus-within:shadow-[0_0_0_4px_rgba(80,143,248,0.2)] focus-within:transform focus-within:-translate-y-2"
             style={{ border: '1px solid rgba(255, 255, 255, 0.12)' }}
           >
+            {/* Uploaded File Chip rendered above textarea input */}
+            {uploadedFile && (
+              <div className="mx-5 mt-4 inline-flex items-center gap-2.5 bg-[#252530] border border-white/[0.08] rounded-xl px-3 py-1.5 self-start shadow-sm">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Preview" className="w-6 h-6 object-cover rounded-md border border-white/10" />
+                ) : (
+                  <span className="material-symbols-outlined text-sm text-[#4F8EF7]">image</span>
+                )}
+                <span className="text-xs text-[#CACAD5] font-medium font-['Inter',sans-serif]">
+                  {uploadedFile.name.length > 20 ? uploadedFile.name.slice(0, 17) + '...' : uploadedFile.name}
+                </span>
+                {isUploading ? (
+                  <div className="w-3.5 h-3.5 border-2 border-[#4F8EF7] border-t-transparent rounded-full animate-spin ml-1" />
+                ) : (
+                  <button 
+                    onClick={handleRemoveFile} 
+                    className="text-[#6B6B80] hover:text-[#F0F0F5] transition-colors flex items-center justify-center p-0.5 rounded-full hover:bg-white/5 active:scale-95"
+                    aria-label="Remove image"
+                  >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                )}
+              </div>
+            )}
+
             <textarea
               className="w-full min-h-[140px] bg-transparent border-none focus:ring-0 text-[#e4e1e9] p-5 pb-16 resize-none font-['Inter',sans-serif] text-base leading-relaxed placeholder:text-white/50"
               placeholder="e.g. I need help understanding Integration by Parts..."
@@ -139,33 +250,22 @@ export default function WelcomePage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,.heic"
                 className="hidden"
                 onChange={handleFileUpload}
               />
               {/* Blue Circular Arrow Send Button */}
               <button
                 onClick={handleSend}
-                disabled={topic.length < 10}
+                disabled={topic.length < 10 || isUploading}
                 className={`w-10 h-10 rounded-full bg-[#4F8EF7] text-white shadow-[0_4px_14px_rgba(79,142,247,0.3)] hover:shadow-[0_6px_20px_rgba(79,142,247,0.4)] transition-all duration-200 active:scale-[0.98] flex items-center justify-center group ${
-                  topic.length < 10 ? 'opacity-40 cursor-not-allowed' : ''
+                  topic.length < 10 || isUploading ? 'opacity-40 cursor-not-allowed' : ''
                 }`}
               >
                 <span className="material-symbols-outlined text-lg group-hover:-translate-y-0.5 transition-transform">arrow_upward</span>
               </button>
             </div>
           </div>
-
-          {/* Uploaded File Chip */}
-          {uploadedFile && (
-            <div className="mt-3 inline-flex items-center gap-2 bg-[#1A1A24] border border-white/[0.06] rounded-full px-3 py-1.5">
-              <span className="material-symbols-outlined text-sm text-[#4F8EF7]">image</span>
-              <span className="text-xs text-[#F0F0F5]">{uploadedFile.name}</span>
-              <button onClick={handleRemoveFile} className="text-[#6B6B80] hover:text-[#F0F0F5]">
-                <span className="material-symbols-outlined text-sm">close</span>
-              </button>
-            </div>
-          )}
         </div>
       </main>
 
@@ -176,6 +276,8 @@ export default function WelcomePage() {
         topic={topic}
         selectedMode={selectedMode}
         uploadedFile={uploadedFile}
+        uploadedFileUrl={uploadedFileUrl}
+        uploadedImageBase64={uploadedImageBase64}
       />
 
       {/* SideDrawer */}
@@ -190,6 +292,14 @@ export default function WelcomePage() {
           <p className="text-[#CACAD5] text-sm text-center">
             You've used your 3 answers for today. Come back tomorrow — or go unlimited with Klaivo Pro.
           </p>
+        </div>
+      )}
+
+      {/* Custom Alert/Error Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#1B1B22]/90 backdrop-blur-md border border-[#FF453A]/30 text-[#F0F0F5] px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm">
+          <span className="material-symbols-outlined text-[#FF453A] text-[20px]">error</span>
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>
