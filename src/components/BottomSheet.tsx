@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, getProfile } from '../lib/supabase';
-import { generateAnswer, readImage } from '../lib/api';
+import { generateAnswer, compressImage } from '../lib/api';
 import { buildStudyPrompt, analysePrompt } from '../lib/promptBuilder';
 
 interface BottomSheetProps {
@@ -206,21 +206,7 @@ function getGeneratingMessages(topic: string, mode: string, level: string, emoti
   return base;
 }
 
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        const base64String = reader.result.split(',')[1];
-        resolve(base64String);
-      } else {
-        reject(new Error('Failed to read file as base64 string'));
-      }
-    };
-    reader.onerror = error => reject(error);
-  });
-};
+
 
 export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uploadedFile, uploadedFileUrl, uploadedImageBase64 }: BottomSheetProps) {
   const navigate = useNavigate();
@@ -233,6 +219,13 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
   const [errorMsg, setErrorMsg] = useState('');
   const [profile, setProfile] = useState<any>(null);
   const [isReadingImageState, setIsReadingImageState] = useState(false);
+  const imageBase64Ref = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (uploadedImageBase64) {
+      imageBase64Ref.current = uploadedImageBase64;
+    }
+  }, [uploadedImageBase64]);
 
   const mode = selectedMode || 'understand';
   const currentQuestions = QUESTIONS_BY_MODE[mode] || QUESTIONS_BY_MODE.understand;
@@ -254,6 +247,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
         subjectType: ''
       };
       setErrorMsg('');
+      setIsReadingImageState(false);
     }
   }, [isOpen]);
 
@@ -351,26 +345,8 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
 
       const finalDepth = finalAnswers.depth || detected.depth || 'solid';
 
-      let activeImageBase64 = uploadedImageBase64;
-      if (!activeImageBase64 && uploadedFile) {
-        activeImageBase64 = await fileToBase64(uploadedFile);
-      }
-
-      if (activeImageBase64) {
-        setIsReadingImageState(true);
-        setCurrentMessage("Reading your image...");
-        try {
-          await readImage({
-            imageBase64: activeImageBase64,
-            mediaType: uploadedFile ? uploadedFile.type : 'image/jpeg'
-          });
-        } catch (imageErr) {
-          console.error("Image read failed:", imageErr);
-          throw new Error("Failed to read image. Please try again.");
-        }
-        setCurrentMessage("Building your answer from what I found...");
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setIsReadingImageState(false);
+      if (!imageBase64Ref.current && uploadedFile) {
+        imageBase64Ref.current = await compressImage(uploadedFile);
       }
 
       // Constructed studyContext matching Step 5 exactly
@@ -385,7 +361,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
         urgency: finalAnswers.urgency || detectedUrgency,
         subjectType: finalAnswers.subjectType || detectedSubjectType,
         essayQuestion: finalAnswers.essay_question || null,
-        uploadedImageBase64: activeImageBase64 || null,
+        uploadedImageBase64: imageBase64Ref.current || null,
         uploadedMediaType: uploadedFile ? uploadedFile.type : 'image/jpeg',
       };
 
@@ -418,6 +394,23 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
         throw new Error('Invalid response from AI generator');
       }
 
+      // Upload image to storage AFTER successful generation
+      let finalUploadedFileUrl = uploadedFileUrl;
+      if (uploadedFile && !finalUploadedFileUrl) {
+        try {
+          const ext = uploadedFile.name.split('.').pop()?.toLowerCase();
+          const path = `${user.id}/${Date.now()}.${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from('klaivo-uploads')
+            .upload(path, uploadedFile, { contentType: uploadedFile.type, upsert: false });
+          if (uploadError) throw uploadError;
+          const { data: { publicUrl } } = supabase.storage.from('klaivo-uploads').getPublicUrl(path);
+          finalUploadedFileUrl = publicUrl;
+        } catch (uploadErr) {
+          console.error("Storage upload failed, continuing session insert without image URL:", uploadErr);
+        }
+      }
+
       // Insert session
       const { data: sessionRecord, error: sessionError } = await supabase.from('sessions').insert({
         user_id: user.id,
@@ -429,7 +422,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
         emotional_context: studyContext.emotionalContext,
         result_json: response.result,
         essay_question: studyContext.essayQuestion,
-        uploaded_file_url: uploadedFileUrl || null
+        uploaded_file_url: finalUploadedFileUrl || null
       }).select().single();
 
       if (sessionError) {

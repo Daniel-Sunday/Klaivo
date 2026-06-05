@@ -94,3 +94,87 @@ export function stripMarkdownForCopy(text: string): string {
     .replace(/^[-*+]\s+/gm, '• ')
     .trim()
 }
+
+// Utility: Compress image to JPEG base64 string
+export function compressImage(file: File, maxWidth = 1200, maxHeight = 1200, quality = 0.75): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result.split(',')[1]);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          if (typeof reader.result === 'string') {
+            resolve(reader.result.split(',')[1]);
+          } else {
+            reject(new Error('Failed to read file'));
+          }
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          const base64String = dataUrl.split(',')[1];
+          resolve(base64String);
+        } catch (e) {
+          if (typeof reader.result === 'string') {
+            resolve(reader.result.split(',')[1]);
+          } else {
+            reject(new Error('Failed to read file'));
+          }
+        }
+      };
+      img.onerror = () => {
+        const r = new FileReader();
+        r.onload = () => {
+          if (typeof r.result === 'string') {
+            resolve(r.result.split(',')[1]);
+          } else {
+            reject(new Error('Failed to read file'));
+          }
+        };
+        r.onerror = error => reject(error);
+        r.readAsDataURL(file);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = error => reject(error);
+    reader.readAsDataURL(file);
+  });
+}
+

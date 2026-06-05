@@ -4,6 +4,7 @@ import { getGreeting } from '../lib/greeting';
 import { useStudy } from '../context/StudyContext';
 import BottomSheet from '../components/BottomSheet';
 import SideDrawer from '../components/SideDrawer';
+import { compressImage } from '../lib/api';
 
 const MODES = [
   { id: 'understand', label: 'Understand', icon: 'psychology' },
@@ -12,16 +13,7 @@ const MODES = [
   { id: 'revise', label: 'Revise', icon: 'history_edu' },
 ];
 
-async function uploadImageToStorage(file: File, userId: string): Promise<{ path: string; publicUrl: string }> {
-  const ext = file.name.split('.').pop()?.toLowerCase();
-  const path = `${userId}/${Date.now()}.${ext}`;
-  const { error } = await supabase.storage
-    .from('klaivo-uploads')
-    .upload(path, file, { contentType: file.type, upsert: false });
-  if (error) throw error;
-  const { data: { publicUrl } } = supabase.storage.from('klaivo-uploads').getPublicUrl(path);
-  return { path, publicUrl };
-}
+
 
 export default function WelcomePage() {
   const { setTopic, setSelectedMode, setUploadedFile } = useStudy();
@@ -40,13 +32,11 @@ export default function WelcomePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setUserId(user.id);
         const { data: profileData } = await getProfile(user.id);
         setFirstName(profileData?.first_name || 'there');
       }
@@ -67,15 +57,32 @@ export default function WelcomePage() {
   const greeting = getGreeting(firstName);
 
   const handleSend = async () => {
-    if (topic.length < 10 || isUploading) return;
+    console.log("handleSend clicked | topic:", topic, "length:", topic.length, "isUploading:", isUploading);
+    if (topic.length < 10 || isUploading) {
+      console.log("handleSend returning early: topic too short or still uploading");
+      return;
+    }
     
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      console.log("Fetching authenticated user...");
+      const { data: { user }, error } = await supabase.auth.getUser();
+      console.log("User fetch result | user:", user, "error:", error);
+      if (error) {
+        console.error("supabase.auth.getUser error:", error);
+      }
+      if (!user) {
+        console.warn("No user session found, exiting handleSend");
+        return;
+      }
 
-    setTopic(topic);
-    setSelectedMode(selectedMode);
-    setUploadedFile(uploadedFile);
-    setShowBottomSheet(true);
+      console.log("Opening bottom sheet...");
+      setTopic(topic);
+      setSelectedMode(selectedMode);
+      setUploadedFile(uploadedFile);
+      setShowBottomSheet(true);
+    } catch (err) {
+      console.error("handleSend exception:", err);
+    }
   };
 
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -95,43 +102,34 @@ export default function WelcomePage() {
     setUploadedFileLocal(file);
     setUploadedFile(file);
 
-    // Read as base64 for API call
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        const base64String = reader.result.split(',')[1];
+    // Read as base64 and compress for API call
+    console.log("Starting image compression...");
+    setIsUploading(true);
+    compressImage(file)
+      .then(base64String => {
+        console.log("Image compressed successfully, base64 length:", base64String.length);
         setUploadedImageBase64(base64String);
-      }
-    };
-    reader.readAsDataURL(file);
+      })
+      .catch(err => {
+        console.error("Compression failed, falling back to original:", err);
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            const base64 = reader.result.split(',')[1];
+            console.log("Fallback read completed, base64 length:", base64.length);
+            setUploadedImageBase64(base64);
+          }
+        };
+        reader.readAsDataURL(file);
+      })
+      .finally(() => {
+        console.log("Setting isUploading to false");
+        setIsUploading(false);
+      });
 
     // Create local object URL for preview
     const preview = URL.createObjectURL(file);
     setPreviewUrl(preview);
-
-    // Upload to Supabase Storage immediately
-    try {
-      setIsUploading(true);
-      let activeUserId = userId;
-      if (!activeUserId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          activeUserId = user.id;
-          setUserId(user.id);
-        }
-      }
-      if (!activeUserId) {
-        throw new Error("User session not found. Please log in again.");
-      }
-      const { publicUrl } = await uploadImageToStorage(file, activeUserId);
-      setUploadedFileUrl(publicUrl);
-    } catch (err: any) {
-      console.error(err);
-      setToastMessage(err.message || "Failed to upload image to storage");
-      handleRemoveFile();
-    } finally {
-      setIsUploading(false);
-    }
   };
 
   const handleRemoveFile = () => {
