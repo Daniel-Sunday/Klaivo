@@ -1,5 +1,6 @@
 const ALLOWED_ORIGINS = [
   'https://klaivo.app',
+  'http://localhost:3000',
   'http://localhost:5173',
 ];
 

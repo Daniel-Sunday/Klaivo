@@ -1,190 +1,130 @@
 export const config = { runtime: 'edge' };
 
-import { verifyAuth } from './_utils/auth';
-import { sanitizeInput } from './_utils/sanitize';
-import { checkAndIncrementRateLimit } from './_utils/rateLimit';
 import { getCorsHeaders, handleCors } from './_utils/cors';
 import { createClient } from '@supabase/supabase-js';
 
-function selectMaxTokens(mode: string, level: string, depth: string, subjectType: string): number {
-  if (mode === 'flashcards' || mode === 'quiz') return 1000;
-
-  const isComplex =
-    mode === 'write' ||
-    level === 'postgrad' ||
-    level === '500_600' ||
-    depth === 'full' ||
-    depth === 'exam' ||
-    subjectType === 'mathematical';
-
-  return isComplex ? 2000 : 1500;
-}
-
-async function callGemini(systemPrompt: string, parts: any[], maxTokens: number): Promise<string> {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ role: 'user', parts }],
-        generationConfig: { maxOutputTokens: maxTokens }
-      })
-    }
-  );
-
-  if (!response.ok) {
-    const errBody = await response.text().catch(() => '');
-    throw new Error(`Gemini API error ${response.status}: ${errBody}`);
-  }
-
-  const data = await response.json();
-
-  if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-    throw new Error('Gemini returned an empty or blocked response');
-  }
-
-  return data.candidates[0].content.parts[0].text;
-}
-
 export default async function handler(req: Request): Promise<Response> {
+  // Handle CORS preflight
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
+  
   const cors = getCorsHeaders(req);
 
+  // Method check
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405, headers: cors });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
+      status: 405, 
+      headers: { ...cors, 'Content-Type': 'application/json' } 
+    });
   }
 
   try {
-    const { user, error: authError, supabase } = await verifyAuth(req);
-    if (authError || !user || !supabase) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: cors });
+    // 1. Verify user's Supabase JWT from Authorization header
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Missing or invalid Authorization header' }), { 
+        status: 401, 
+        headers: { ...cors, 'Content-Type': 'application/json' } 
+      });
     }
+    const token = authHeader.substring(7);
 
-    const body = await req.json();
-    const { systemPrompt, userMessage, mode, level, topic, depth, subjectType, imageBase64, maxTokens: clientMaxTokens } = body;
-
-    // Sanitize
-    const cleanTopic = sanitizeInput(topic || '', 600);
-
-    // Server-side rate limit
-    const { allowed } = await checkAndIncrementRateLimit(supabase, user.id);
-    if (!allowed) {
-      return new Response(JSON.stringify({ error: 'RATE_LIMIT_EXCEEDED' }), { status: 429, headers: cors });
-    }
-
-    // Server-side free limit check — 2 uses per 8-day window (rolling)
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('is_pro, is_trial, pro_expires_at, total_uses_used, free_window_start')
-      .eq('id', user.id)
-      .single();
-
-    const isActive = profileData?.is_pro && profileData?.pro_expires_at && new Date(profileData.pro_expires_at) > new Date();
-
-    if (!isActive && profileData) {
-      const windowStart = profileData.free_window_start ? new Date(profileData.free_window_start) : null;
-      const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
-      const inWindow = windowStart && windowStart > eightDaysAgo;
-
-      if (inWindow && (profileData.total_uses_used || 0) >= 2) {
-        return new Response(JSON.stringify({ error: 'FREE_LIMIT_REACHED' }), { status: 402, headers: cors });
-      }
-
-      // Reset window if expired
-      if (!inWindow) {
-        await supabase.from('profiles')
-          .update({ total_uses_used: 0, free_window_start: new Date().toISOString() })
-          .eq('id', user.id);
-        profileData.total_uses_used = 0;
-      }
-    }
-
-    // Check cache (skip for image queries)
-    if (!imageBase64) {
-      const normalized = cleanTopic.toLowerCase().replace(/\s+/g, ' ').trim();
-      const cacheKey = `${normalized}|${mode}|${level}|${depth || 'solid'}|${subjectType || 'conceptual'}`;
-      const { data: cached } = await supabase
-        .from('answer_cache')
-        .select('result_json, hit_count')
-        .eq('cache_key', cacheKey)
-        .gt('expires_at', new Date().toISOString())
-        .single();
-
-      if (cached) {
-        await supabase.from('answer_cache')
-          .update({ hit_count: (cached.hit_count || 0) + 1 })
-          .eq('cache_key', cacheKey);
-
-        if (!isActive) {
-          await supabase.from('profiles')
-            .update({ total_uses_used: (profileData?.total_uses_used || 0) + 1 })
-            .eq('id', user.id);
-        }
-
-        return new Response(
-          JSON.stringify({ result: cached.result_json, fromCache: true }),
-          { headers: { ...cors, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
-    // Determine max tokens based on task complexity (client can override)
-    const maxTokens = clientMaxTokens || selectMaxTokens(mode, level, depth, subjectType);
-
-    // Build Gemini parts
-    const parts = imageBase64
-      ? [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: userMessage }]
-      : [{ text: userMessage }];
-
-    // Call Gemini
-    const rawText = await callGemini(systemPrompt, parts, maxTokens);
-    const clean = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const result = JSON.parse(clean);
-
-    // Service client for cache + usage writes
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceRoleKey) {
-      throw new Error('Database environment variables are missing');
+      throw new Error('Database environment variables (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) are missing on the server.');
     }
 
-    const serviceSupabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey);
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
 
-    // Save to cache (not for image queries)
-    if (!imageBase64) {
-      const normalized = cleanTopic.toLowerCase().replace(/\s+/g, ' ').trim();
-      const cacheKey = `${normalized}|${mode}|${level}|${depth || 'solid'}|${subjectType || 'conceptual'}`;
-      await serviceSupabase.from('answer_cache').upsert({
-        cache_key: cacheKey,
-        topic_normalized: normalized,
-        mode, level,
-        depth: depth || 'solid',
-        subject_type: subjectType || 'conceptual',
-        result_json: result,
-        hit_count: 0,
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      }, { onConflict: 'cache_key' });
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: authError?.message || 'Authentication failed' }), { 
+        status: 401, 
+        headers: { ...cors, 'Content-Type': 'application/json' } 
+      });
     }
 
-    // Increment total_uses_used for free users
-    if (!isActive) {
-      await serviceSupabase.from('profiles')
-        .update({ total_uses_used: (profileData?.total_uses_used || 0) + 1, updated_at: new Date().toISOString() })
-        .eq('id', user.id);
+    // 2. Parse request JSON body
+    const body = await req.json();
+    const { systemPrompt, userMessage, imageBase64 } = body;
+
+    if (!systemPrompt || !userMessage) {
+      return new Response(JSON.stringify({ error: 'systemPrompt and userMessage are required fields' }), { 
+        status: 400, 
+        headers: { ...cors, 'Content-Type': 'application/json' } 
+      });
     }
 
-    return new Response(
-      JSON.stringify({ result, fromCache: false }),
-      { headers: { ...cors, 'Content-Type': 'application/json' } }
-    );
+    // 3. Read GEMINI_API_KEY
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      throw new Error('GEMINI_API_KEY is not defined in the environment variables.');
+    }
+
+    // 4. Build parts and call Gemini API
+    const parts: any[] = [];
+    if (imageBase64) {
+      parts.push({
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: imageBase64
+        }
+      });
+    }
+    parts.push({ text: userMessage });
+
+    const geminiBody = {
+      system_instruction: {
+        parts: [{ text: systemPrompt }]
+      },
+      contents: [
+        {
+          role: 'user',
+          parts: parts
+        }
+      ]
+    };
+
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+    
+    const geminiResponse = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(geminiBody)
+    });
+
+    if (!geminiResponse.ok) {
+      const errorText = await geminiResponse.text().catch(() => 'Unknown error');
+      throw new Error(`Gemini API error (Status ${geminiResponse.status}): ${errorText}`);
+    }
+
+    const data = await geminiResponse.json();
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) {
+      throw new Error('Gemini API returned an empty response or candidate was blocked.');
+    }
+
+    // 5. Clean up response string if it's formatted as markdown JSON
+    const clean = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    let result;
+    try {
+      result = JSON.parse(clean);
+    } catch (e) {
+      result = rawText;
+    }
+
+    // 6. Return response
+    return new Response(JSON.stringify({ result }), {
+      status: 200,
+      headers: { ...cors, 'Content-Type': 'application/json' }
+    });
 
   } catch (err: any) {
-    const cors = getCorsHeaders(req);
-    const status = err.message === 'INVALID_INPUT' ? 400 : 500;
-    return new Response(JSON.stringify({ error: err.message }), { status, headers: cors });
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...cors, 'Content-Type': 'application/json' }
+    });
   }
 }
