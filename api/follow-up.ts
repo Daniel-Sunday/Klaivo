@@ -63,10 +63,16 @@ Rules:
     );
 
     if (!geminiResponse.ok) {
-      throw new Error(`Gemini API error: ${geminiResponse.status}`);
+      const errBody = await geminiResponse.text().catch(() => '');
+      throw new Error(`Gemini API error ${geminiResponse.status}: ${errBody}`);
     }
 
     const data = await geminiResponse.json();
+
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Gemini returned an empty or blocked response');
+    }
+
     const answer = data.candidates[0].content.parts[0].text;
 
     return new Response(

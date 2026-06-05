@@ -32,27 +32,34 @@ export default async function handler(req: Request): Promise<Response> {
 
     const userMessage = `Topic: ${topic}\nMode: ${mode}\nLevel: ${level}\nExisting answer:\n${existingFullAnswer}\n\n${type === 'simplify' ? 'Rewrite simpler.' : 'Go much deeper.'}`;
 
-    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.CLAUDE_API_KEY || '',
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-latest',
-        max_tokens: type === 'simplify' ? 1000 : 2200,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }]
-      })
-    });
+    const maxTokens = type === 'simplify' ? 1000 : 2200;
 
-    if (!claudeResponse.ok) {
-      throw new Error(`Claude API error: ${claudeResponse.status}`);
+    const geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+          generationConfig: { maxOutputTokens: maxTokens }
+        })
+      }
+    );
+
+    if (!geminiResponse.ok) {
+      const errBody = await geminiResponse.text().catch(() => '');
+      throw new Error(`Gemini API error ${geminiResponse.status}: ${errBody}`);
     }
 
-    const data = await claudeResponse.json();
-    const clean = data.content[0].text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const data = await geminiResponse.json();
+
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Gemini returned an empty or blocked response');
+    }
+
+    const rawText = data.candidates[0].content.parts[0].text;
+    const clean = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const result = JSON.parse(clean);
 
     return new Response(

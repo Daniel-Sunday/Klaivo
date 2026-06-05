@@ -46,11 +46,18 @@ export default async function handler(req: Request): Promise<Response> {
     );
 
     if (!geminiResponse.ok) {
-      throw new Error(`Gemini API error: ${geminiResponse.status}`);
+      const errBody = await geminiResponse.text().catch(() => '');
+      throw new Error(`Gemini API error ${geminiResponse.status}: ${errBody}`);
     }
 
     const data = await geminiResponse.json();
-    const clean = data.candidates[0].content.parts[0].text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Gemini returned an empty or blocked response');
+    }
+
+    const rawText = data.candidates[0].content.parts[0].text;
+    const clean = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const result = JSON.parse(clean);
 
     return new Response(

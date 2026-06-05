@@ -6,19 +6,10 @@ import { checkAndIncrementRateLimit } from './_utils/rateLimit';
 import { getCorsHeaders, handleCors } from './_utils/cors';
 import { createClient } from '@supabase/supabase-js';
 
-interface ModelSelection {
-  model: string;
-  provider: 'anthropic' | 'gemini';
-  maxTokens: number;
-}
+function selectMaxTokens(mode: string, level: string, depth: string, subjectType: string): number {
+  if (mode === 'flashcards' || mode === 'quiz') return 1000;
 
-function selectModel(mode: string, level: string, depth: string, subjectType: string): ModelSelection {
-  // Flashcards and quizzes are lightweight — always use Gemini Flash
-  if (mode === 'flashcards' || mode === 'quiz') {
-    return { model: 'gemini-2.5-flash', provider: 'gemini', maxTokens: 1000 };
-  }
-
-  const needsSonnet =
+  const isComplex =
     mode === 'write' ||
     level === 'postgrad' ||
     level === '500_600' ||
@@ -26,9 +17,35 @@ function selectModel(mode: string, level: string, depth: string, subjectType: st
     depth === 'exam' ||
     subjectType === 'mathematical';
 
-  return needsSonnet
-    ? { model: 'claude-3-5-sonnet-latest', provider: 'anthropic', maxTokens: 2000 }
-    : { model: 'gemini-2.5-flash', provider: 'gemini', maxTokens: 1500 };
+  return isComplex ? 2000 : 1500;
+}
+
+async function callGemini(systemPrompt: string, parts: any[], maxTokens: number): Promise<string> {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts }],
+        generationConfig: { maxOutputTokens: maxTokens }
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const errBody = await response.text().catch(() => '');
+    throw new Error(`Gemini API error ${response.status}: ${errBody}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+    throw new Error('Gemini returned an empty or blocked response');
+  }
+
+  return data.candidates[0].content.parts[0].text;
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -114,56 +131,20 @@ export default async function handler(req: Request): Promise<Response> {
       }
     }
 
-    // Select model based on task complexity
-    const selected = selectModel(mode, level, depth, subjectType);
-    const maxTokens = clientMaxTokens || selected.maxTokens;
-    const { model, provider } = selected;
+    // Determine max tokens based on task complexity (client can override)
+    const maxTokens = clientMaxTokens || selectMaxTokens(mode, level, depth, subjectType);
 
-    // Build message content
-    const content = imageBase64
-      ? [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } }, { type: 'text', text: userMessage }]
-      : userMessage;
+    // Build Gemini parts
+    const parts = imageBase64
+      ? [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: userMessage }]
+      : [{ text: userMessage }];
 
-    // Call the appropriate model
-    let rawText: string;
-    if (provider === 'gemini') {
-      const geminiParts = imageBase64
-        ? [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: userMessage }]
-        : [{ text: userMessage }];
-      const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: systemPrompt }] },
-            contents: [{ role: 'user', parts: geminiParts }],
-            generationConfig: { maxOutputTokens: maxTokens }
-          })
-        }
-      );
-      if (!geminiResponse.ok) throw new Error(`Gemini API error: ${geminiResponse.status}`);
-      const geminiData = await geminiResponse.json();
-      rawText = geminiData.candidates[0].content.parts[0].text;
-    } else {
-      // Anthropic (Claude Sonnet)
-      const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.CLAUDE_API_KEY || '',
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({ model, max_tokens: maxTokens, system: systemPrompt, messages: [{ role: 'user', content }] })
-      });
-      if (!claudeResponse.ok) throw new Error(`Claude API error: ${claudeResponse.status}`);
-      const claudeData = await claudeResponse.json();
-      rawText = claudeData.content[0].text;
-    }
+    // Call Gemini
+    const rawText = await callGemini(systemPrompt, parts, maxTokens);
     const clean = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const result = JSON.parse(clean);
 
-    // Single serviceSupabase declaration — used for both cache and count
+    // Service client for cache + usage writes
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -197,7 +178,7 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     return new Response(
-      JSON.stringify({ result, fromCache: false, modelUsed: model }),
+      JSON.stringify({ result, fromCache: false }),
       { headers: { ...cors, 'Content-Type': 'application/json' } }
     );
 
