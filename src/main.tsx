@@ -1,3 +1,9 @@
+const savedTheme = localStorage.getItem('klaivo_theme') || 'dark';
+const resolved = savedTheme === 'system'
+  ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+  : savedTheme;
+document.documentElement.setAttribute('data-theme', resolved);
+
 const REQUIRED_ENV = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY']
 REQUIRED_ENV.forEach(key => {
   if (!import.meta.env[key]) {
@@ -5,6 +11,7 @@ REQUIRED_ENV.forEach(key => {
     throw new Error(`Missing required environment variable: ${key}`)
   }
 })
+
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

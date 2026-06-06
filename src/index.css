@@ -13,6 +13,50 @@
   font-display: swap;
 }
 
+:root[data-theme='dark'] {
+  --bg-primary: #0A0A0F;
+  --bg-secondary: #111118;
+  --surface: #131318;
+  --surface-low: #1b1b20;
+  --surface-mid: #1f1f25;
+  --surface-high: #2a292f;
+  --text-primary: #F0F0F5;
+  --text-body: #CACAD5;
+  --text-secondary: #6B6B80;
+  --text-placeholder: #3D3D52;
+  --accent: #4F8EF7;
+  --accent-glow: rgba(79,142,247,0.08);
+  --accent-subtle: rgba(79,142,247,0.10);
+  --accent-border: rgba(79,142,247,0.30);
+  --ghost-border: rgba(255,255,255,0.06);
+  --success: #4ADE80;
+  --danger: #F87171;
+  --border-subtle: rgba(255,255,255,0.05);
+  --card-shadow: 0 2px 16px rgba(0,0,0,0.35);
+}
+
+:root[data-theme='light'] {
+  --bg-primary: #F8F8FC;
+  --bg-secondary: #EFEFF5;
+  --surface: #EBEBF2;
+  --surface-low: #E2E2EC;
+  --surface-mid: #D8D8E5;
+  --surface-high: #CCCCDC;
+  --text-primary: #0A0A0F;
+  --text-body: #2A2A3A;
+  --text-secondary: #5A5A70;
+  --text-placeholder: #9090A8;
+  --accent: #3A7BF7;
+  --accent-glow: rgba(58,123,247,0.08);
+  --accent-subtle: rgba(58,123,247,0.10);
+  --accent-border: rgba(58,123,247,0.30);
+  --ghost-border: rgba(0,0,0,0.08);
+  --success: #16A34A;
+  --danger: #DC2626;
+  --border-subtle: rgba(0,0,0,0.06);
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.10);
+}
+
 /* tailwindcss */
 @tailwind base;
 @tailwind components;
@@ -27,7 +71,7 @@
 
 @layer components {
   .ghost-border {
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--ghost-border);
   }
   .bg-gradient-primary {
     background: linear-gradient(135deg, #4F8EF7, #3B7BF0);

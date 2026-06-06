@@ -149,14 +149,14 @@ export default function WelcomePage() {
   };
 
   return (
-    <div className="bg-[#0A0A0F] text-[#e4e1e9] font-['Inter',sans-serif] antialiased min-h-screen flex flex-col selection:bg-[#508ff8] selection:text-white">
+    <div className="bg-bg-primary text-text-body font-['Inter',sans-serif] antialiased min-h-screen flex flex-col selection:bg-accent selection:text-white">
       {/* Top Navigation */}
-      <header className="fixed top-0 w-full z-50 bg-[#0A0A0F]/60 backdrop-blur-xl border-b border-white/5 shadow-none pt-safe-top">
+      <header className="fixed top-0 w-full z-50 bg-bg-primary/60 backdrop-blur-xl border-b border-border-subtle shadow-none pt-safe-top">
         <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
           {/* Left-aligned Hamburger and K Logo */}
           <div className="flex items-center gap-4">
             <button 
-              className="text-[#c2c6d5] hover:text-[#e4e1e9] transition-colors active:scale-95 duration-200 flex items-center justify-center w-8 h-8"
+              className="text-text-secondary hover:text-text-primary transition-colors active:scale-95 duration-200 flex items-center justify-center w-8 h-8"
               onClick={() => setShowSideDrawer(true)}
               aria-label="Menu"
             >
@@ -172,7 +172,7 @@ export default function WelcomePage() {
           {/* Right-aligned Settings Icon */}
           <button
             onClick={() => navigate('/settings')}
-            className="text-[#c2c6d5] hover:text-[#e4e1e9] transition-colors active:scale-95 duration-200 flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer"
+            className="text-text-secondary hover:text-text-primary transition-colors active:scale-95 duration-200 flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer"
             aria-label="Settings"
           >
             <span className="material-symbols-outlined text-[24px]">settings</span>
@@ -185,9 +185,9 @@ export default function WelcomePage() {
         <div className="my-auto flex flex-col items-center w-full">
           {/* Greeting - Bold and Heavy */}
           <div className="mb-8 w-full text-center">
-            <h1 className="font-['Manrope',sans-serif] font-bold text-3xl md:text-4xl tracking-tight leading-tight mb-2 text-[#F0F0F5]">
+            <h1 className="font-['Manrope',sans-serif] font-bold text-3xl md:text-4xl tracking-tight leading-tight mb-2 text-text-primary">
               {greeting.main}{firstName}<br/>
-              <span className="text-[#c2c6d5] font-medium text-2xl md:text-3xl">{greeting.sub}</span>
+              <span className="text-text-secondary font-medium text-2xl md:text-3xl">{greeting.sub}</span>
             </h1>
           </div>
 
@@ -197,14 +197,14 @@ export default function WelcomePage() {
               <button
                 key={mode.id}
                 onClick={() => setSelectedModeLocal(selectedMode === mode.id ? null : mode.id)}
-                className={`px-5 py-3 rounded-full border border-white/[0.06] hover:bg-[#35343a] transition-all duration-200 ease-out active:scale-[0.98] flex items-center justify-start gap-3 w-full ${
-                  selectedMode === mode.id
-                    ? 'bg-[rgba(79,142,247,0.10)] border-[rgba(79,142,247,0.30)]'
-                    : 'bg-[#16161F]'
-                }`}
+                style={{
+                  background: selectedMode === mode.id ? 'var(--accent-subtle)' : 'var(--bg-secondary)',
+                  borderColor: selectedMode === mode.id ? 'var(--accent-border)' : 'var(--ghost-border)'
+                }}
+                className="px-5 py-3 rounded-full border hover:bg-surface-low transition-all duration-200 ease-out active:scale-[0.98] flex items-center justify-start gap-3 w-full"
               >
                 <span className="material-symbols-outlined text-[20px]">{mode.icon}</span>
-                <span className="font-['Inter',sans-serif] text-sm font-medium text-[#e4e1e9]">{mode.label}</span>
+                <span className="font-['Inter',sans-serif] text-sm font-medium text-text-body">{mode.label}</span>
               </button>
             ))}
           </div>
@@ -213,26 +213,26 @@ export default function WelcomePage() {
         {/* AI Input Area at Bottom - Sticky */}
         <div className="w-full mt-8 relative sticky bottom-0 pb-safe-bottom">
           <div 
-            className="bg-[#1b1b20] rounded-2xl transition-all duration-300 overflow-hidden flex flex-col relative focus-within:border-[#508ff8] focus-within:shadow-[0_0_0_4px_rgba(80,143,248,0.2)] focus-within:transform focus-within:-translate-y-2"
-            style={{ border: '1px solid rgba(255, 255, 255, 0.12)' }}
+            className="bg-surface-low rounded-2xl transition-all duration-300 overflow-hidden flex flex-col relative focus-within:border-accent focus-within:shadow-[0_0_0_4px_var(--accent-glow)] focus-within:transform focus-within:-translate-y-2"
+            style={{ border: '1px solid var(--ghost-border)' }}
           >
             {/* Uploaded File Chip rendered above textarea input */}
             {uploadedFile && (
-              <div className="mx-5 mt-4 inline-flex items-center gap-2.5 bg-[#252530] border border-white/[0.08] rounded-xl px-3 py-1.5 self-start shadow-sm">
+              <div className="mx-5 mt-4 inline-flex items-center gap-2.5 bg-surface-mid border border-ghost-border rounded-xl px-3 py-1.5 self-start shadow-sm">
                 {previewUrl ? (
                   <img src={previewUrl} alt="Preview" className="w-6 h-6 object-cover rounded-md border border-white/10" />
                 ) : (
-                  <span className="material-symbols-outlined text-sm text-[#4F8EF7]">image</span>
+                  <span className="material-symbols-outlined text-sm text-accent">image</span>
                 )}
-                <span className="text-xs text-[#CACAD5] font-medium font-['Inter',sans-serif]">
+                <span className="text-xs text-text-body font-medium font-['Inter',sans-serif]">
                   {uploadedFile.name.length > 20 ? uploadedFile.name.slice(0, 17) + '...' : uploadedFile.name}
                 </span>
                 {isUploading ? (
-                  <div className="w-3.5 h-3.5 border-2 border-[#4F8EF7] border-t-transparent rounded-full animate-spin ml-1" />
+                  <div className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin ml-1" />
                 ) : (
                   <button 
                     onClick={handleRemoveFile} 
-                    className="text-[#6B6B80] hover:text-[#F0F0F5] transition-colors flex items-center justify-center p-0.5 rounded-full hover:bg-white/5 active:scale-95"
+                    className="text-text-secondary hover:text-text-primary transition-colors flex items-center justify-center p-0.5 rounded-full hover:bg-white/5 active:scale-95"
                     aria-label="Remove image"
                   >
                     <span className="material-symbols-outlined text-sm">close</span>
@@ -242,7 +242,7 @@ export default function WelcomePage() {
             )}
 
             <textarea
-              className="w-full min-h-[140px] bg-transparent border-none focus:ring-0 text-[#e4e1e9] p-5 pb-16 resize-none font-['Inter',sans-serif] text-base leading-relaxed placeholder:text-white/50"
+              className="w-full min-h-[140px] bg-transparent border-none focus:ring-0 text-text-body p-5 pb-16 resize-none font-['Inter',sans-serif] text-base leading-relaxed placeholder:text-white/50"
               placeholder="e.g. I need help understanding Integration by Parts..."
               value={topic}
               onChange={(e) => setTopicLocal(e.target.value)}
@@ -253,7 +253,7 @@ export default function WelcomePage() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 aria-label="Attach file"
-                className="w-10 h-10 flex items-center justify-center rounded-full text-[#8c909e] hover:text-[#e4e1e9] hover:bg-[#35343a] transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-mid transition-colors"
               >
                 <span className="material-symbols-outlined text-[24px]">add</span>
               </button>
@@ -268,7 +268,10 @@ export default function WelcomePage() {
               <button
                 onClick={handleSend}
                 disabled={topic.length < 10 || isUploading}
-                className={`w-10 h-10 rounded-full bg-[#4F8EF7] text-white shadow-[0_4px_14px_rgba(79,142,247,0.3)] hover:shadow-[0_6px_20px_rgba(79,142,247,0.4)] transition-all duration-200 active:scale-[0.98] flex items-center justify-center group ${
+                style={{
+                  boxShadow: '0 4px 14px var(--accent-glow)'
+                }}
+                className={`w-10 h-10 rounded-full bg-accent text-white hover:shadow-[0_6px_20px_var(--accent-glow)] transition-all duration-200 active:scale-[0.98] flex items-center justify-center group ${
                   topic.length < 10 || isUploading ? 'opacity-40 cursor-not-allowed' : ''
                 }`}
               >
@@ -298,8 +301,8 @@ export default function WelcomePage() {
 
       {/* Daily Limit Toast */}
       {showLimitMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#1b1b20] border border-white/[0.06] px-6 py-4 rounded-xl max-w-md z-50">
-          <p className="text-[#CACAD5] text-sm text-center">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low border border-ghost-border px-6 py-4 rounded-xl max-w-md z-50">
+          <p className="text-text-body text-sm text-center">
             You've used your 3 answers for today. Come back tomorrow — or go unlimited with Klaivo Pro.
           </p>
         </div>
@@ -307,8 +310,8 @@ export default function WelcomePage() {
 
       {/* Custom Alert/Error Toast */}
       {toastMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#1B1B22]/90 backdrop-blur-md border border-[#FF453A]/30 text-[#F0F0F5] px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm">
-          <span className="material-symbols-outlined text-[#FF453A] text-[20px]">error</span>
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low/90 backdrop-blur-md border border-danger/30 text-text-primary px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm">
+          <span className="material-symbols-outlined text-danger text-[20px]">error</span>
           <span>{toastMessage}</span>
         </div>
       )}

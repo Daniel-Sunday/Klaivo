@@ -1,60 +1,35 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
-export type Theme = 'dark' | 'light' | 'system';
-
-let globalTheme: Theme = (localStorage.getItem('theme') as Theme) || 'system';
-const listeners = new Set<(theme: Theme) => void>();
-
-const applyTheme = (newTheme: Theme) => {
-  if (typeof window === 'undefined') return;
-  const root = window.document.documentElement;
-  root.classList.remove('light', 'dark');
-  
-  if (newTheme === 'system') {
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    root.classList.add(systemTheme);
-  } else {
-    root.classList.add(newTheme);
-  }
-};
+const THEME_KEY = 'klaivo_theme';
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>(globalTheme);
+  const [theme, setThemeState] = useState(() => {
+    return localStorage.getItem(THEME_KEY) || 'dark';
+  });
 
   useEffect(() => {
-    const handleChange = (newTheme: Theme) => {
-      setThemeState(newTheme);
-    };
-    listeners.add(handleChange);
-    return () => {
-      listeners.delete(handleChange);
-    };
-  }, []);
-
-  const setTheme = (newTheme: Theme) => {
-    globalTheme = newTheme;
-    localStorage.setItem('theme', newTheme);
-    applyTheme(newTheme);
-    listeners.forEach(l => l(newTheme));
-  };
-
-  // Add system listener if system theme is selected
-  useEffect(() => {
-    if (theme !== 'system') return;
-    
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemChange = () => {
-      applyTheme('system');
-    };
-    
-    mediaQuery.addEventListener('change', handleSystemChange);
-    return () => mediaQuery.removeEventListener('change', handleSystemChange);
+    applyTheme(theme);
   }, [theme]);
 
-  return { theme, setTheme };
-}
+  function applyTheme(t: string) {
+    const resolved = t === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : t;
+    document.documentElement.setAttribute('data-theme', resolved);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#0A0A0F' : '#F8F8FC');
+    localStorage.setItem(THEME_KEY, t);
+  }
 
-// Apply theme immediately on load
-if (typeof window !== 'undefined') {
-  applyTheme(globalTheme);
+  async function setTheme(t: string) {
+    setThemeState(t);
+    applyTheme(t);
+    // Persist to profile (for cross-device sync)
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.from('profiles').update({ theme: t }).eq('id', session.user.id);
+    }
+  }
+
+  return { theme, setTheme };
 }

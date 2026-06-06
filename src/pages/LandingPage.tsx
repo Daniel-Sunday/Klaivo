@@ -105,44 +105,44 @@ export default function LandingPage() {
 
   return (
     <div className="bg-surface-dim text-on-surface font-body antialiased selection:bg-primary selection:text-on-primary">
-      <header className="fixed top-0 w-full z-50 bg-[#0A0A0F]/80 backdrop-blur-xl transition-all duration-300 pt-safe-top">
+      <header className="fixed top-0 w-full z-50 bg-bg-primary/80 backdrop-blur-xl transition-all duration-300 pt-safe-top">
         <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
-            <span className="text-xl font-bold tracking-tighter text-[#F0F0F5] font-headline">
+            <span className="text-xl font-bold tracking-tighter text-text-primary font-headline">
               Klaivo
             </span>
           </div>
           <div className="flex items-center gap-4">
             <button
-              className="md:hidden text-[#CACAD5] hover:text-[#4F8EF7] transition-colors duration-300"
+              className="md:hidden text-text-body hover:text-accent transition-colors duration-300"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <span className="material-symbols-outlined text-2xl">menu</span>
             </button>
-            <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row gap-6 items-center absolute top-full left-0 right-0 bg-[#0A0A0F]/95 backdrop-blur-xl p-6 md:p-0 md:bg-transparent md:static md:backdrop-blur-none`}>
+            <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row gap-6 items-center absolute top-full left-0 right-0 bg-bg-primary/95 backdrop-blur-xl p-6 md:p-0 md:bg-transparent md:static md:backdrop-blur-none`}>
               <a
-                className="text-[#CACAD5] hover:text-[#4F8EF7] font-body text-sm transition-colors duration-300"
+                className="text-text-body hover:text-accent font-body text-sm transition-colors duration-300"
                 href="#features"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Features
               </a>
               <a
-                className="text-[#CACAD5] hover:text-[#4F8EF7] font-body text-sm transition-colors duration-300"
+                className="text-text-body hover:text-accent font-body text-sm transition-colors duration-300"
                 href="#pricing"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
               </a>
               <a
-                className="text-[#CACAD5] hover:text-[#4F8EF7] font-body text-sm transition-colors duration-300"
+                className="text-text-body hover:text-accent font-body text-sm transition-colors duration-300"
                 href="#faq"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 FAQ
               </a>
               <button
-                className="md:hidden w-full bg-gradient-primary text-[#F0F0F5] px-6 py-2.5 rounded-full font-medium text-sm hover:opacity-90 transition-opacity"
+                className="md:hidden w-full bg-gradient-primary text-text-primary px-6 py-2.5 rounded-full font-medium text-sm hover:opacity-90 transition-opacity"
                 onClick={() => {
                   navigate('/onboarding');
                   setMobileMenuOpen(false);
@@ -152,7 +152,7 @@ export default function LandingPage() {
               </button>
             </div>
             <button
-              className="hidden md:block bg-gradient-primary text-[#F0F0F5] px-6 py-2.5 rounded-full font-medium text-sm hover:opacity-90 transition-opacity"
+              className="hidden md:block bg-gradient-primary text-text-primary px-6 py-2.5 rounded-full font-medium text-sm hover:opacity-90 transition-opacity"
               onClick={() => navigate('/onboarding')}
             >
               Get Started
@@ -162,12 +162,12 @@ export default function LandingPage() {
       </header>
       <main className="pt-24 md:pt-32 pb-20">
         <section className="px-6 mx-auto max-w-lg md:max-w-3xl flex flex-col items-center text-center mb-32 pt-12">
-          <h1 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tight leading-tight text-[#F0F0F5] mb-8">
+          <h1 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tight leading-tight text-text-primary mb-8">
             The AI for students who&apos;ve outgrown the old way.
           </h1>
           <div className="w-full max-w-sm space-y-4">
             <button
-              className="w-full bg-[#F0F0F5] text-surface-dim py-3.5 px-6 flex items-center justify-center gap-3 font-medium hover:bg-white transition-colors rounded-lg"
+              className="w-full bg-text-primary text-surface-dim py-3.5 px-6 flex items-center justify-center gap-3 font-medium hover:bg-white transition-colors rounded-lg"
               onClick={handleGoogleSignIn}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -198,7 +198,7 @@ export default function LandingPage() {
             <div className="space-y-3">
               <div className="relative">
                 <input
-                  className="w-full bg-surface-container-low ghost-border py-3.5 px-4 text-[#F0F0F5] placeholder:text-[#6B6B80] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/15 transition-all text-sm rounded-lg"
+                  className="w-full bg-surface-container-low ghost-border py-3.5 px-4 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/15 transition-all text-sm rounded-lg"
                   placeholder="Enter your email"
                   type="email"
                   value={email}
@@ -206,7 +206,7 @@ export default function LandingPage() {
                 />
               </div>
               <button
-                className="w-full bg-gradient-primary text-[#F0F0F5] py-3.5 px-6 font-semibold hover:opacity-90 transition-opacity rounded-lg"
+                className="w-full bg-gradient-primary text-text-primary py-3.5 px-6 font-semibold hover:opacity-90 transition-opacity rounded-lg"
                 onClick={handleEmailSignIn}
                 disabled={authLoading}
               >
@@ -218,13 +218,13 @@ export default function LandingPage() {
                 {authMessage}
               </p>
             )}
-            <p className="text-xs text-[#6B6B80] pt-4 leading-relaxed">
+            <p className="text-xs text-text-secondary pt-4 leading-relaxed">
               By continuing, you agree to Klaivo&apos;s{' '}
-              <a className="underline hover:text-[#CACAD5] transition-colors" href="#">
+              <a className="underline hover:text-text-body transition-colors" href="#">
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a className="underline hover:text-[#CACAD5] transition-colors" href="#">
+              <a className="underline hover:text-text-body transition-colors" href="#">
                 Privacy Policy
               </a>
               .
@@ -235,10 +235,10 @@ export default function LandingPage() {
         <section className="px-6 py-24 bg-surface max-w-5xl mx-auto rounded-3xl ghost-border mb-32 relative overflow-hidden">
           <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col items-center text-center mx-auto max-w-3xl">
-            <h2 className="font-headline text-4xl md:text-5xl font-bold tracking-tight text-[#F0F0F5] mb-6">
+            <h2 className="font-headline text-4xl md:text-5xl font-bold tracking-tight text-text-primary mb-6">
               Meet Klaivo.
             </h2>
-            <p className="text-[#CACAD5] text-lg md:text-xl leading-relaxed">
+            <p className="text-text-body text-lg md:text-xl leading-relaxed">
               Meet Klaivo, the AI that studies with you. It guides your thinking, not just answers
               questions — helping you understand deeply, retain more, and move from confusion to
               clarity.
@@ -257,10 +257,10 @@ export default function LandingPage() {
                   menu_book
                 </span>
               </div>
-              <h3 className="font-headline text-xl font-semibold text-[#F0F0F5] mb-3">
+              <h3 className="font-headline text-xl font-semibold text-text-primary mb-3">
                 Real answers, instantly.
               </h3>
-              <p className="text-[#CACAD5] leading-relaxed text-sm">
+              <p className="text-text-body leading-relaxed text-sm">
                 Drop any topic and get a full structured answer — explanation, key points, exam
                 ready. All inside Klaivo.
               </p>
@@ -274,10 +274,10 @@ export default function LandingPage() {
                   upload_file
                 </span>
               </div>
-              <h3 className="font-headline text-xl font-semibold text-[#F0F0F5] mb-3">
+              <h3 className="font-headline text-xl font-semibold text-text-primary mb-3">
                 Upload your materials.
               </h3>
-              <p className="text-[#CACAD5] leading-relaxed text-sm">
+              <p className="text-text-body leading-relaxed text-sm">
                 Lecture notes, PDFs, textbook pages. Klaivo reads them and builds answers directly
                 from your course content.
               </p>
@@ -291,10 +291,10 @@ export default function LandingPage() {
                   style
                 </span>
               </div>
-              <h3 className="font-headline text-xl font-semibold text-[#F0F0F5] mb-3">
+              <h3 className="font-headline text-xl font-semibold text-text-primary mb-3">
                 Study that actually sticks.
               </h3>
-              <p className="text-[#CACAD5] leading-relaxed text-sm">
+              <p className="text-text-body leading-relaxed text-sm">
                 Turn any answer into flashcards or a quiz instantly. Learn it, test yourself, and
                 own it before the exam.
               </p>
@@ -308,10 +308,10 @@ export default function LandingPage() {
                   person
                 </span>
               </div>
-              <h3 className="font-headline text-xl font-semibold text-[#F0F0F5] mb-3">
+              <h3 className="font-headline text-xl font-semibold text-text-primary mb-3">
                 A companion that walks with you.
               </h3>
-              <p className="text-[#CACAD5] leading-relaxed text-sm">
+              <p className="text-text-body leading-relaxed text-sm">
                 Klaivo adapts to your level and your goal every single session — from confusion to
                 clarity, every time.
               </p>
@@ -320,36 +320,36 @@ export default function LandingPage() {
         </section>
 
         <section id="pricing" className="px-6 max-w-5xl mx-auto mb-32 text-center">
-          <h2 className="font-headline text-3xl md:text-4xl font-bold tracking-tight text-[#F0F0F5] mb-12">
+          <h2 className="font-headline text-3xl md:text-4xl font-bold tracking-tight text-text-primary mb-12">
             Simple pricing. No surprises.
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto text-left">
             <div className="bg-surface-container-low ghost-border p-8 rounded-3xl flex flex-col">
-              <h3 className="font-headline text-2xl font-bold text-[#F0F0F5] mb-2">Free</h3>
-              <div className="text-[#CACAD5] mb-8 text-sm">For casual study sessions.</div>
-              <div className="text-3xl font-headline font-bold text-[#F0F0F5] mb-8">
-                {freePrice} <span className="text-sm font-normal text-[#6B6B80]">/month</span>
+              <h3 className="font-headline text-2xl font-bold text-text-primary mb-2">Free</h3>
+              <div className="text-text-body mb-8 text-sm">For casual study sessions.</div>
+              <div className="text-3xl font-headline font-bold text-text-primary mb-8">
+                {freePrice} <span className="text-sm font-normal text-text-secondary">/month</span>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
-                <li className="flex items-center gap-3 text-sm text-[#CACAD5]">
-                  <span className="material-symbols-outlined text-[#6B6B80] text-sm">check</span>3
+                <li className="flex items-center gap-3 text-sm text-text-body">
+                  <span className="material-symbols-outlined text-text-secondary text-sm">check</span>3
                   answers per day
                 </li>
-                <li className="flex items-center gap-3 text-sm text-[#CACAD5]">
-                  <span className="material-symbols-outlined text-[#6B6B80] text-sm">check</span>
+                <li className="flex items-center gap-3 text-sm text-text-body">
+                  <span className="material-symbols-outlined text-text-secondary text-sm">check</span>
                   Full structured result
                 </li>
-                <li className="flex items-center gap-3 text-sm text-[#CACAD5]">
-                  <span className="material-symbols-outlined text-[#6B6B80] text-sm">check</span>
+                <li className="flex items-center gap-3 text-sm text-text-body">
+                  <span className="material-symbols-outlined text-text-secondary text-sm">check</span>
                   All results saved
                 </li>
-                <li className="flex items-center gap-3 text-sm text-[#CACAD5]">
-                  <span className="material-symbols-outlined text-[#6B6B80] text-sm">check</span>3
+                <li className="flex items-center gap-3 text-sm text-text-body">
+                  <span className="material-symbols-outlined text-text-secondary text-sm">check</span>3
                   follow-up questions per result
                 </li>
               </ul>
               <button
-                className="w-full ghost-border bg-transparent text-[#F0F0F5] rounded-full py-3 font-medium hover:bg-surface-container-high transition-colors"
+                className="w-full ghost-border bg-transparent text-text-primary rounded-full py-3 font-medium hover:bg-surface-container-high transition-colors"
                 onClick={() => navigate('/onboarding')}
               >
                 Get Started
@@ -357,34 +357,34 @@ export default function LandingPage() {
             </div>
 
             <div className="bg-surface-container-high border border-primary/30 p-8 rounded-3xl flex flex-col relative overflow-hidden shadow-[0_0_40px_rgba(79,142,247,0.1)]">
-              <div className="absolute top-0 right-0 bg-gradient-primary text-[#F0F0F5] text-xs font-bold px-3 py-1 rounded-bl-lg tracking-wider uppercase">
+              <div className="absolute top-0 right-0 bg-gradient-primary text-text-primary text-xs font-bold px-3 py-1 rounded-bl-lg tracking-wider uppercase">
                 Most Popular
               </div>
               <h3 className="font-headline text-2xl font-bold text-primary mb-2">Pro</h3>
-              <div className="text-[#CACAD5] mb-8 text-sm">For absolute academic clarity.</div>
-              <div className="text-3xl font-headline font-bold text-[#F0F0F5] mb-8">
+              <div className="text-text-body mb-8 text-sm">For absolute academic clarity.</div>
+              <div className="text-3xl font-headline font-bold text-text-primary mb-8">
                 {proMonthlyPrice}
-                <span className="text-sm font-normal text-[#6B6B80]">/month</span>
+                <span className="text-sm font-normal text-text-secondary">/month</span>
                 {pricingMode === 'ngn' && (
-                  <div className="text-sm font-normal text-[#6B6B80] mt-2">₦3,500/3 months</div>
+                  <div className="text-sm font-normal text-text-secondary mt-2">₦3,500/3 months</div>
                 )}
               </div>
               <ul className="space-y-4 mb-8 flex-1">
-                <li className="flex items-center gap-3 text-sm text-[#CACAD5]">
+                <li className="flex items-center gap-3 text-sm text-text-body">
                   <span className="material-symbols-outlined text-primary text-sm">check</span>
                   Unlimited answers
                 </li>
-                <li className="flex items-center gap-3 text-sm text-[#CACAD5]">
+                <li className="flex items-center gap-3 text-sm text-text-body">
                   <span className="material-symbols-outlined text-primary text-sm">check</span>
                   Unlimited material uploads
                 </li>
-                <li className="flex items-center gap-3 text-sm text-[#CACAD5]">
+                <li className="flex items-center gap-3 text-sm text-text-body">
                   <span className="material-symbols-outlined text-primary text-sm">check</span>
                   Advanced study modes
                 </li>
               </ul>
               <button
-                className="w-full bg-gradient-primary text-[#F0F0F5] rounded-full py-3 font-semibold hover:opacity-90 transition-opacity"
+                className="w-full bg-gradient-primary text-text-primary rounded-full py-3 font-semibold hover:opacity-90 transition-opacity"
                 onClick={() => navigate('/onboarding')}
               >
                 Upgrade to Pro
@@ -393,7 +393,7 @@ export default function LandingPage() {
           </div>
           {showLocalPricingHint && pricingMode !== 'ngn' && (
             <button
-              className="mt-6 text-center text-[#6B6B80] text-sm hover:text-[#CACAD5] transition-colors"
+              className="mt-6 text-center text-text-secondary text-sm hover:text-text-body transition-colors"
               onClick={() => setPricingMode('ngn')}
             >
               Based in Nigeria? See local pricing
@@ -402,7 +402,7 @@ export default function LandingPage() {
         </section>
 
         <section id="faq" className="px-6 max-w-3xl mx-auto mb-32">
-          <h2 className="font-headline text-3xl font-bold tracking-tight text-[#F0F0F5] mb-10 text-center">
+          <h2 className="font-headline text-3xl font-bold tracking-tight text-text-primary mb-10 text-center">
             Questions students ask
           </h2>
           <div className="space-y-4">
@@ -415,13 +415,13 @@ export default function LandingPage() {
                   onClick={() => setOpenFaqIndex(isOpen ? -1 : index)}
                 >
                   <div className="flex justify-between items-center">
-                    <h4 className="font-medium text-[#F0F0F5]">{item.question}</h4>
-                    <span className="material-symbols-outlined text-[#6B6B80] group-hover:text-primary transition-colors">
+                    <h4 className="font-medium text-text-primary">{item.question}</h4>
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary transition-colors">
                       {isOpen ? 'remove' : 'add'}
                     </span>
                   </div>
                   {isOpen && (
-                    <p className="text-[#CACAD5] leading-relaxed text-sm mt-4 pr-8">{item.answer}</p>
+                    <p className="text-text-body leading-relaxed text-sm mt-4 pr-8">{item.answer}</p>
                   )}
                 </button>
               );
@@ -430,41 +430,41 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="w-full border-t border-white/5 bg-[#0A0A0F]">
+      <footer className="w-full border-t border-border-subtle bg-bg-primary">
         <div className="flex flex-col md:flex-row justify-between items-center px-8 py-12 max-w-7xl mx-auto gap-8">
           <div className="flex flex-col items-center md:items-start gap-2">
-            <span className="font-['Manrope'] font-bold text-[#F0F0F5] text-xl tracking-tighter">
+            <span className="font-['Manrope'] font-bold text-text-primary text-xl tracking-tighter">
               Klaivo
             </span>
-            <span className="text-[#6B6B80] text-sm">Think with AI. Study like never before.</span>
+            <span className="text-text-secondary text-sm">Think with AI. Study like never before.</span>
           </div>
           <div className="flex flex-wrap justify-center gap-6">
             <a
-              className="text-[#6B6B80] hover:text-[#F0F0F5] text-sm underline-offset-4 hover:underline transition-colors"
+              className="text-text-secondary hover:text-text-primary text-sm underline-offset-4 hover:underline transition-colors"
               href="#"
             >
               Privacy Policy
             </a>
             <a
-              className="text-[#6B6B80] hover:text-[#F0F0F5] text-sm underline-offset-4 hover:underline transition-colors"
+              className="text-text-secondary hover:text-text-primary text-sm underline-offset-4 hover:underline transition-colors"
               href="#"
             >
               Terms of Service
             </a>
             <a
-              className="text-[#6B6B80] hover:text-[#F0F0F5] text-sm underline-offset-4 hover:underline transition-colors"
+              className="text-text-secondary hover:text-text-primary text-sm underline-offset-4 hover:underline transition-colors"
               href="#"
             >
               Twitter
             </a>
             <a
-              className="text-[#6B6B80] hover:text-[#F0F0F5] text-sm underline-offset-4 hover:underline transition-colors"
+              className="text-text-secondary hover:text-text-primary text-sm underline-offset-4 hover:underline transition-colors"
               href="#"
             >
               LinkedIn
             </a>
           </div>
-          <div className="text-[#6B6B80] text-sm font-['Inter'] text-center md:text-right">
+          <div className="text-text-secondary text-sm font-['Inter'] text-center md:text-right">
             © 2026 Klaivo. All rights reserved.
           </div>
         </div>

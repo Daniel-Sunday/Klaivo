@@ -39,7 +39,7 @@ const CARD_CONFIG: Record<string, { key: string; label: string; color: string; t
 
 function SkeletonCard() {
   return (
-    <div className="bg-[#16161F] border border-white/[0.06] rounded-2xl p-6 space-y-4 animate-pulse">
+    <div className="bg-bg-secondary border border-ghost-border rounded-2xl p-6 space-y-4 animate-pulse">
       <div className="h-4 bg-white/10 rounded w-1/3" />
       <div className="space-y-2">
         <div className="h-3 bg-white/5 rounded w-full" />
@@ -226,7 +226,7 @@ export default function ResultPage() {
     if (!text) return null;
     const parts = text.split(/(\*\*.*?\*\*)/g);
     return (
-      <p className="text-[#CACAD5] text-sm leading-relaxed whitespace-pre-line font-['Inter',sans-serif]">
+      <p className="text-text-body text-sm leading-relaxed whitespace-pre-line font-['Inter',sans-serif]">
         {parts.map((part, index) => {
           if (part.startsWith('**') && part.endsWith('**')) {
             return <strong key={index} className="text-white font-semibold">{part.slice(2, -2)}</strong>;
@@ -242,8 +242,8 @@ export default function ResultPage() {
     return (
       <ul className="space-y-3 font-['Inter',sans-serif]">
         {bullets.map((bullet, index) => (
-          <li key={index} className="flex items-start gap-2.5 text-sm text-[#CACAD5] leading-relaxed">
-            <span className="text-[#4F8EF7] mt-1.5 shrink-0 select-none">•</span>
+          <li key={index} className="flex items-start gap-2.5 text-sm text-text-body leading-relaxed">
+            <span className="text-accent mt-1.5 shrink-0 select-none">•</span>
             <span>
               {bullet.split(/(\*\*.*?\*\*)/g).map((part, pIdx) => {
                 if (part.startsWith('**') && part.endsWith('**')) {
@@ -260,8 +260,8 @@ export default function ResultPage() {
 
   if (loading) {
     return (
-      <div className="bg-[#0A0A0F] text-[#e4e1e9] min-h-screen flex flex-col font-['Inter',sans-serif]">
-        <header className="border-b border-white/5 bg-[#0A0A0F]/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50">
+      <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif]">
+        <header className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
             <div className="w-24 h-5 bg-white/5 rounded animate-pulse" />
             <div className="w-8 h-8 bg-white/5 rounded-full animate-pulse" />
@@ -279,9 +279,9 @@ export default function ResultPage() {
 
   if (!session) {
     return (
-      <div className="bg-[#0A0A0F] text-[#e4e1e9] min-h-screen flex flex-col justify-center items-center font-['Inter',sans-serif]">
-        <p className="text-lg font-bold text-[#F0F0F5] mb-4">Study session not found</p>
-        <button onClick={() => navigate('/welcome')} className="px-5 py-2.5 bg-[#1B1B20] border border-white/10 rounded-full text-sm hover:bg-white/5 transition-colors">
+      <div className="bg-bg-primary text-text-body min-h-screen flex flex-col justify-center items-center font-['Inter',sans-serif]">
+        <p className="text-lg font-bold text-text-primary mb-4">Study session not found</p>
+        <button onClick={() => navigate('/welcome')} className="px-5 py-2.5 bg-surface-low border border-white/10 rounded-full text-sm hover:bg-white/5 transition-colors">
           Go Home
         </button>
       </div>
@@ -293,25 +293,25 @@ export default function ResultPage() {
   const result = session.result_json || {};
 
   return (
-    <div className="bg-[#0A0A0F] text-[#e4e1e9] min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-[#508ff8] selection:text-white">
+    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white">
       {/* Dynamic Header */}
-      <header className="border-b border-white/5 bg-[#0A0A0F]/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50 pt-safe-top">
+      <header className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50 pt-safe-top">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate('/welcome')}
-              className="text-[#6B6B80] hover:text-[#e4e1e9] p-1.5 hover:bg-[#1C1C24] rounded-full transition-colors flex items-center justify-center"
+              className="text-text-secondary hover:text-text-primary p-1.5 hover:bg-surface-low rounded-full transition-colors flex items-center justify-center bg-transparent border-none cursor-pointer"
               aria-label="Back"
             >
               <span className="material-symbols-outlined text-[20px]">arrow_back</span>
             </button>
-            <h1 className="font-['Manrope',sans-serif] text-sm font-bold text-[#F0F0F5] tracking-tight max-w-[200px] sm:max-w-sm truncate">
+            <h1 className="font-['Manrope',sans-serif] text-sm font-bold text-text-primary tracking-tight max-w-[200px] sm:max-w-sm truncate">
               {session.topic}
             </h1>
           </div>
           <button 
             onClick={handleShare}
-            className="text-[#6B6B80] hover:text-[#e4e1e9] p-2 hover:bg-[#1C1C24] rounded-full transition-colors flex items-center justify-center"
+            className="text-text-secondary hover:text-text-body p-2 hover:bg-surface-low rounded-full transition-colors flex items-center justify-center"
             aria-label="Share"
           >
             <span className="material-symbols-outlined text-[20px]">share</span>
@@ -337,24 +337,24 @@ export default function ResultPage() {
                 key={card.key}
                 className={`rounded-2xl p-6 transition-all duration-300 ${
                   isHero 
-                    ? 'bg-[#13131F] border border-[#4F8EF7]/30 shadow-[0_0_24px_rgba(79,142,247,0.06)]' 
-                    : 'bg-[#16161F] border border-white/[0.06]'
+                    ? 'bg-surface border border-accent/30 shadow-[0_0_24px_rgba(79,142,247,0.06)]' 
+                    : 'bg-bg-secondary border border-ghost-border'
                 }`}
               >
                 {/* Card Title Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className={`text-sm font-bold font-['Manrope',sans-serif] ${isHero ? 'text-[#4F8EF7]' : 'text-[#CACAD5]'}`}>
+                    <h3 className={`text-sm font-bold font-['Manrope',sans-serif] ${isHero ? 'text-accent' : 'text-text-body'}`}>
                       {card.label}
                     </h3>
                     {isHero && card.subheader && (
-                      <p className="text-xs text-[#6B6B80] mt-0.5">{card.subheader}</p>
+                      <p className="text-xs text-text-secondary mt-0.5">{card.subheader}</p>
                     )}
                   </div>
                   {isHero && (
                     <button
                       onClick={() => handleCopy(content, card.key)}
-                      className="text-[#6B6B80] hover:text-[#e4e1e9] p-1.5 hover:bg-white/5 rounded-full transition-all flex items-center justify-center"
+                      className="text-text-secondary hover:text-text-body p-1.5 hover:bg-white/5 rounded-full transition-all flex items-center justify-center"
                       title="Copy full content"
                     >
                       <span className="material-symbols-outlined text-[18px]">
@@ -374,27 +374,27 @@ export default function ResultPage() {
                     {renderProse(content)}
                     
                     {/* Ghost Report Answer Button & Form */}
-                    <div className="pt-2 border-t border-white/5">
+                    <div className="pt-2 border-t border-border-subtle">
                       {reportOpen ? (
-                        <div className="mt-2 p-4 bg-[#1B1B22] border border-white/[0.06] rounded-xl space-y-3">
+                        <div className="mt-2 p-4 bg-surface-low border border-ghost-border rounded-xl space-y-3">
                           <textarea
                             placeholder="What is wrong with this answer? Be specific..."
                             value={issueText}
                             onChange={(e) => setIssueText(e.target.value)}
                             rows={3}
-                            className="w-full bg-transparent border-none text-sm text-[#CACAD5] focus:ring-0 p-0 resize-none placeholder-[#6B6B80] font-['Inter',sans-serif]"
+                            className="w-full bg-transparent border-none text-sm text-text-body focus:ring-0 p-0 resize-none placeholder-[#6B6B80] font-['Inter',sans-serif]"
                           />
                           <div className="flex justify-end gap-2">
                             <button
                               onClick={() => setReportOpen(false)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#6B6B80] hover:text-[#CACAD5] hover:bg-white/5 transition-colors"
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-text-body hover:bg-white/5 transition-colors"
                             >
                               Cancel
                             </button>
                             <button
                               disabled={issueText.trim().length < 5 || reporting}
                               onClick={handleSendReport}
-                              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#4F8EF7] text-white hover:bg-[#4F8EF7]/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-accent text-white hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {reporting ? 'Sending...' : 'Send Report'}
                             </button>
@@ -403,7 +403,7 @@ export default function ResultPage() {
                       ) : (
                         <button
                           onClick={() => setReportOpen(true)}
-                          className="text-xs text-[#6B6B80] hover:text-[#CACAD5] transition-colors hover:underline flex items-center gap-1 bg-transparent border-none outline-none cursor-pointer"
+                          className="text-xs text-text-secondary hover:text-text-body transition-colors hover:underline flex items-center gap-1 bg-transparent border-none outline-none cursor-pointer"
                         >
                           Report a problem with this answer →
                         </button>
@@ -417,11 +417,11 @@ export default function ResultPage() {
                     {content.map((item: CollapsibleItem, idx: number) => (
                       <details 
                         key={idx} 
-                        className="group bg-[#1D1D26] border border-white/[0.04] rounded-xl overflow-hidden [&_summary::-webkit-details-marker]:hidden"
+                        className="group bg-surface-low border border-ghost-border rounded-xl overflow-hidden [&_summary::-webkit-details-marker]:hidden"
                       >
                         <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/[0.02] transition-colors select-none font-['Inter',sans-serif]">
-                          <span className="text-sm font-medium text-[#F0F0F5] pr-6">{item.question}</span>
-                          <span className="material-symbols-outlined text-[#6B6B80] group-open:rotate-180 transition-transform">expand_more</span>
+                          <span className="text-sm font-medium text-text-primary pr-6">{item.question}</span>
+                          <span className="material-symbols-outlined text-text-secondary group-open:rotate-180 transition-transform">expand_more</span>
                         </summary>
                         <div className="p-4 pt-0 border-t border-white/[0.03] text-sm leading-relaxed">
                           {renderProse(item.approach)}
@@ -436,8 +436,8 @@ export default function ResultPage() {
                     {content.map((qText: string, idx: number) => {
                       const isRevealed = revealedTestQuestions[idx] || false;
                       return (
-                        <div key={idx} className="bg-[#1D1D26] border border-white/[0.04] rounded-xl p-4 space-y-3 font-['Inter',sans-serif]">
-                          <p className="text-sm font-semibold text-[#F0F0F5]">
+                        <div key={idx} className="bg-surface-low border border-ghost-border rounded-xl p-4 space-y-3 font-['Inter',sans-serif]">
+                          <p className="text-sm font-semibold text-text-primary">
                             {idx + 1}. {qText}
                           </p>
                           
@@ -448,28 +448,28 @@ export default function ResultPage() {
                             onChange={(e) => setTestQuestionThoughts(prev => ({ ...prev, [idx]: e.target.value }))}
                             rows={2}
                             disabled={isRevealed}
-                            className="w-full bg-[#16161F] border border-white/[0.06] focus:border-[#4F8EF7]/50 rounded-lg p-2.5 text-xs text-[#CACAD5] focus:outline-none focus:ring-0 resize-none placeholder-[#6B6B80]"
+                            className="w-full bg-bg-secondary border border-ghost-border focus:border-accent/50 rounded-lg p-2.5 text-xs text-text-body focus:outline-none focus:ring-0 resize-none placeholder-[#6B6B80]"
                           />
                           
                           {/* Reveal Toggle */}
                           {!isRevealed ? (
                             <button
                               onClick={() => setRevealedTestQuestions(prev => ({ ...prev, [idx]: true }))}
-                              className="w-full py-2 bg-[#252530] hover:bg-[#353440] text-xs font-semibold text-[#4F8EF7] rounded-lg transition-colors border border-white/[0.06]"
+                              className="w-full py-2 bg-surface-mid hover:bg-surface-high text-xs font-semibold text-accent rounded-lg transition-colors border border-ghost-border"
                             >
                               Tap to reveal answer guidelines
                             </button>
                           ) : (
-                            <div className="p-3 bg-[#16161F]/60 border border-[#4F8EF7]/10 rounded-lg space-y-2">
-                              <p className="text-xs font-bold text-[#4F8EF7]">✦ Suggested Guidelines:</p>
-                              <ul className="text-xs text-[#CACAD5] list-disc list-inside space-y-1">
+                            <div className="p-3 bg-bg-secondary/60 border border-accent/10 rounded-lg space-y-2">
+                              <p className="text-xs font-bold text-accent">✦ Suggested Guidelines:</p>
+                              <ul className="text-xs text-text-body list-disc list-inside space-y-1">
                                 <li>Ensure you defined all key theoretical concepts.</li>
                                 <li>Review if your reasoning matches the core analogy.</li>
                                 <li>Check if you included appropriate examples or applications.</li>
                               </ul>
                               <button
                                 onClick={() => setRevealedTestQuestions(prev => ({ ...prev, [idx]: false }))}
-                                className="text-[10px] text-[#6B6B80] hover:text-[#CACAD5] mt-2 block underline"
+                                className="text-[10px] text-text-secondary hover:text-text-body mt-2 block underline"
                               >
                                 Hide guidelines
                               </button>
@@ -486,7 +486,7 @@ export default function ResultPage() {
         </div>
 
         {/* Inline Refinement and Navigation Bar */}
-        <div className="mt-8 pt-6 border-t border-white/5">
+        <div className="mt-8 pt-6 border-t border-border-subtle">
           <div className="flex items-center justify-between">
             {/* Free refinements — left */}
             <div className="flex gap-2">
@@ -494,7 +494,7 @@ export default function ResultPage() {
                 <button
                   key={type}
                   onClick={() => handleRefine(type.toLowerCase().replace(' ', '_'))}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium ghost-border text-[#6B6B80] hover:text-[#CACAD5] hover:border-white/15 transition-all flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-full text-xs font-medium ghost-border text-text-secondary hover:text-text-body hover:border-white/15 transition-all flex items-center gap-1.5"
                   disabled={refining !== null}
                 >
                   {refining === (type === 'Simplify' ? 'Simplify' : 'Go Deeper') ? (
@@ -519,11 +519,11 @@ export default function ResultPage() {
                       navigate(`/upgrade?from=${f.route}`);
                     }
                   }}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium ghost-border text-[#6B6B80] hover:text-[#CACAD5] hover:border-white/15 transition-all flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-full text-xs font-medium ghost-border text-text-secondary hover:text-text-body hover:border-white/15 transition-all flex items-center gap-1"
                 >
                   <span>◆</span>
                   <span>{f.label}</span>
-                  {!isPro && <span className="text-[10px] text-[#4F8EF7] ml-0.5">Pro</span>}
+                  {!isPro && <span className="text-[10px] text-accent ml-0.5">Pro</span>}
                 </button>
               ))}
             </div>
@@ -531,7 +531,7 @@ export default function ResultPage() {
 
           {/* Refining visual feedback */}
           {refining && (
-            <p className="text-center text-xs text-[#4F8EF7] mt-4 animate-pulse font-medium">
+            <p className="text-center text-xs text-accent mt-4 animate-pulse font-medium">
               Klaivo is rebuilding this...
             </p>
           )}
@@ -539,27 +539,27 @@ export default function ResultPage() {
 
         {/* Threaded Follow-up Section */}
         <div className="mt-10 space-y-6">
-          <h2 className="font-['Manrope',sans-serif] text-sm font-bold text-[#F0F0F5] tracking-tight">
+          <h2 className="font-['Manrope',sans-serif] text-sm font-bold text-text-primary tracking-tight">
             Follow-up Questions
           </h2>
 
           {/* Follow-up history listing */}
           <div className="space-y-6">
             {followUps.map((fu, idx) => (
-              <div key={idx} className="space-y-4 pt-4 border-t border-white/[0.04]">
+              <div key={idx} className="space-y-4 pt-4 border-t border-ghost-border">
                 {/* Student Question */}
                 <div className="flex justify-end">
-                  <div className="bg-[#252530] border border-white/[0.06] rounded-2xl px-5 py-3 max-w-[85%] sm:max-w-md shadow-sm">
-                    <p className="text-sm text-[#F0F0F5] font-['Inter',sans-serif]">{fu.question}</p>
+                  <div className="bg-surface-mid border border-ghost-border rounded-2xl px-5 py-3 max-w-[85%] sm:max-w-md shadow-sm">
+                    <p className="text-sm text-text-primary font-['Inter',sans-serif]">{fu.question}</p>
                   </div>
                 </div>
                 
                 {/* Klaivo Answer */}
                 <div className="flex justify-start">
-                  <div className="bg-[#16161F] border border-white/[0.06] rounded-2xl px-5 py-4 max-w-[95%] sm:max-w-xl shadow-sm space-y-2">
+                  <div className="bg-bg-secondary border border-ghost-border rounded-2xl px-5 py-4 max-w-[95%] sm:max-w-xl shadow-sm space-y-2">
                     <div className="flex items-center gap-2 mb-1">
                       <img src="/logo.svg" alt="Klaivo" className="w-5 h-5" />
-                      <span className="text-xs font-bold text-[#4F8EF7] font-['Manrope',sans-serif]">Klaivo</span>
+                      <span className="text-xs font-bold text-accent font-['Manrope',sans-serif]">Klaivo</span>
                     </div>
                     {renderProse(fu.answer)}
                   </div>
@@ -570,10 +570,10 @@ export default function ResultPage() {
 
           {/* Typing Indicator */}
           {followUpLoading && (
-            <div className="flex justify-start pt-4 border-t border-white/[0.04]">
-              <div className="bg-[#16161F] border border-white/[0.06] rounded-2xl px-5 py-4 flex items-center gap-2">
+            <div className="flex justify-start pt-4 border-t border-ghost-border">
+              <div className="bg-bg-secondary border border-ghost-border rounded-2xl px-5 py-4 flex items-center gap-2">
                 <img src="/logo.svg" alt="Klaivo" className="w-5 h-5 k-breathe" />
-                <div className="flex items-center gap-1 font-['Inter',sans-serif] text-[20px] text-[#4F8EF7] font-bold leading-none select-none">
+                <div className="flex items-center gap-1 font-['Inter',sans-serif] text-[20px] text-accent font-bold leading-none select-none">
                   <span className="animate-[pulse_1.4s_infinite] [animation-delay:0s]">.</span>
                   <span className="animate-[pulse_1.4s_infinite] [animation-delay:0.2s]">.</span>
                   <span className="animate-[pulse_1.4s_infinite] [animation-delay:0.4s]">.</span>
@@ -584,17 +584,17 @@ export default function ResultPage() {
 
           {/* Follow-up input form */}
           {followUps.length >= 3 ? (
-            <div className="bg-[#16161F]/40 border border-dashed border-white/5 rounded-2xl p-6 text-center">
-              <p className="text-xs text-[#6B6B80] italic">
+            <div className="bg-bg-secondary/40 border border-dashed border-border-subtle rounded-2xl p-6 text-center">
+              <p className="text-xs text-text-secondary italic">
                 Thread complete — you've reached the 3 follow-up limit for this session result.
               </p>
             </div>
           ) : (
             <div 
-              className="bg-[#1b1b20] rounded-2xl border border-white/10 overflow-hidden flex flex-col relative focus-within:border-[#508ff8] focus-within:shadow-[0_0_0_4px_rgba(80,143,248,0.2)] transition-all duration-300"
+              className="bg-surface-low rounded-2xl border border-white/10 overflow-hidden flex flex-col relative focus-within:border-accent focus-within:shadow-[0_0_0_4px_rgba(80,143,248,0.2)] transition-all duration-300"
             >
               <textarea
-                className="w-full min-h-[100px] bg-transparent border-none focus:ring-0 text-[#e4e1e9] p-4 pb-14 resize-none font-['Inter',sans-serif] text-sm leading-relaxed placeholder:text-white/40"
+                className="w-full min-h-[100px] bg-transparent border-none focus:ring-0 text-text-body p-4 pb-14 resize-none font-['Inter',sans-serif] text-sm leading-relaxed placeholder:text-white/40"
                 placeholder="Ask a follow-up question about this explanation..."
                 value={followUpText}
                 onChange={(e) => setFollowUpText(e.target.value)}
@@ -602,13 +602,13 @@ export default function ResultPage() {
                 disabled={followUpLoading}
               />
               <div className="absolute bottom-3 right-3 flex items-center gap-3">
-                <span className="text-[10px] text-[#6B6B80]">
+                <span className="text-[10px] text-text-secondary">
                   {followUps.length}/3 follow-ups
                 </span>
                 <button
                   onClick={() => sendFollowUp(followUpText)}
                   disabled={!followUpText.trim() || followUpLoading}
-                  className="w-8 h-8 rounded-full bg-[#4F8EF7] disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-all duration-200 active:scale-[0.95]"
+                  className="w-8 h-8 rounded-full bg-accent disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-all duration-200 active:scale-[0.95]"
                   aria-label="Send"
                 >
                   <span className="material-symbols-outlined text-[18px]">arrow_upward</span>
@@ -621,8 +621,8 @@ export default function ResultPage() {
 
       {/* Custom Alert/Error Toast */}
       {toastMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#1B1B22]/90 backdrop-blur-md border border-[#4F8EF7]/30 text-[#F0F0F5] px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm">
-          <span className="material-symbols-outlined text-[#4F8EF7] text-[20px]">info</span>
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low/90 backdrop-blur-md border border-accent/30 text-text-primary px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm">
+          <span className="material-symbols-outlined text-accent text-[20px]">info</span>
           <span>{toastMessage}</span>
         </div>
       )}

@@ -448,12 +448,12 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
       {/* Drawer Body */}
-      <div className="relative bg-[#131318] w-full max-w-lg rounded-t-3xl p-6 pb-8 pb-safe-bottom border-t border-white/10 z-10 transition-transform duration-300">
-        <div className="w-12 h-1 bg-[#6B6B80] rounded-full mx-auto mb-6" />
+      <div className="relative bg-surface w-full max-w-lg rounded-t-3xl p-6 pb-8 pb-safe-bottom border-t border-white/10 z-10 transition-transform duration-300">
+        <div className="w-12 h-1 bg-text-secondary rounded-full mx-auto mb-6" />
         
         {/* Close Button */}
         {sheetState !== 'generating' && (
-          <button onClick={onClose} className="absolute top-4 right-4 text-[#6B6B80] hover:text-[#F0F0F5] bg-transparent border-none outline-none cursor-pointer">
+          <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary bg-transparent border-none outline-none cursor-pointer">
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         )}
@@ -463,8 +463,8 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
           if (!q) return null;
           return (
             <div className="flex flex-col">
-              <h2 className="text-xl font-headline font-bold text-[#F0F0F5] mb-2">{q.text}</h2>
-              <p className="text-[#6B6B80] font-body text-sm mb-6">{q.subtext}</p>
+              <h2 className="text-xl font-headline font-bold text-text-primary mb-2">{q.text}</h2>
+              <p className="text-text-secondary font-body text-sm mb-6">{q.subtext}</p>
               
               {q.type === 'pills' && (
                 <div className="flex flex-col gap-3">
@@ -472,7 +472,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
                     <button
                       key={opt.id}
                       onClick={() => handlePillSelect(opt.id)}
-                      className="w-full text-left bg-[#1B1B20] border border-white/[0.06] hover:bg-[#252530] transition-colors rounded-xl px-5 py-3.5 text-sm font-medium text-[#CACAD5] active:scale-[0.99] font-body cursor-pointer"
+                      className="w-full text-left bg-surface-low border border-ghost-border hover:bg-surface-mid transition-colors rounded-xl px-5 py-3.5 text-sm font-medium text-text-body active:scale-[0.99] font-body cursor-pointer"
                     >
                       {opt.label}
                     </button>
@@ -483,7 +483,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
               {q.type === 'textarea' && (
                 <div className="flex flex-col">
                   <textarea
-                    className="w-full bg-surface-container-low border border-white/[0.06] rounded-xl p-4 font-body text-sm text-[#CACAD5] focus:outline-none focus:border-[#4F8EF7] focus:ring-1 focus:ring-[#4F8EF7]/15 resize-none placeholder-[#6B6B80]"
+                    className="w-full bg-surface-container-low border border-ghost-border rounded-xl p-4 font-body text-sm text-text-body focus:outline-none focus:border-accent focus:ring-1 focus:ring-[#4F8EF7]/15 resize-none placeholder-[#6B6B80]"
                     placeholder={q.placeholder}
                     rows={4}
                     maxLength={q.maxLength}
@@ -494,14 +494,14 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
                       answersRef.current.essayQuestion = val;
                     }}
                   />
-                  <span className="font-body text-xs text-[#6B6B80] mt-2 self-end">
+                  <span className="font-body text-xs text-text-secondary mt-2 self-end">
                     {essayQuestion.length}/{q.maxLength || 1000}
                   </span>
                   
                   <button
                     onClick={handleTextareaSubmit}
                     disabled={essayQuestion.length < 10}
-                    className="w-full bg-gradient-primary text-[#F0F0F5] py-3.5 rounded-full font-semibold mt-4 hover:opacity-90 transition-opacity active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-body cursor-pointer"
+                    className="w-full bg-gradient-primary text-text-primary py-3.5 rounded-full font-semibold mt-4 hover:opacity-90 transition-opacity active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-body cursor-pointer"
                   >
                     Continue →
                   </button>
@@ -509,7 +509,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
                   {q.optional && (
                     <button
                       onClick={handleTextareaSkip}
-                      className="text-[#6B6B80] hover:text-[#CACAD5] text-sm font-medium mt-3 block text-center cursor-pointer hover:underline bg-transparent border-none outline-none font-body"
+                      className="text-text-secondary hover:text-text-body text-sm font-medium mt-3 block text-center cursor-pointer hover:underline bg-transparent border-none outline-none font-body"
                     >
                       Skip →
                     </button>
@@ -526,19 +526,19 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
               <div className="absolute inset-0 bg-[rgba(79,142,247,0.08)] rounded-full w-24 h-24 blur-[20px] glow-breathe" />
               <img src="/logo.svg" alt="Klaivo" className="relative w-12 h-12 k-breathe" />
             </div>
-            <h3 className="text-lg font-headline font-bold text-[#F0F0F5] mb-2">Generating study resources</h3>
-            <p className="text-[#CACAD5] font-body text-sm max-w-xs transition-all duration-300 min-h-[40px]">{currentMessage}</p>
+            <h3 className="text-lg font-headline font-bold text-text-primary mb-2">Generating study resources</h3>
+            <p className="text-text-body font-body text-sm max-w-xs transition-all duration-300 min-h-[40px]">{currentMessage}</p>
           </div>
         )}
 
         {sheetState === 'error' && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <span className="material-symbols-outlined text-red-500 text-5xl mb-4">error</span>
-            <h3 className="text-lg font-headline font-bold text-[#F0F0F5] mb-2">Generation Failed</h3>
-            <p className="text-[#CACAD5] font-body text-sm max-w-xs mb-6">{errorMsg}</p>
+            <h3 className="text-lg font-headline font-bold text-text-primary mb-2">Generation Failed</h3>
+            <p className="text-text-body font-body text-sm max-w-xs mb-6">{errorMsg}</p>
             <button
               onClick={() => setSheetState('questions')}
-              className="w-full bg-gradient-primary text-[#F0F0F5] py-3.5 rounded-full font-semibold hover:opacity-90 transition-opacity active:scale-[0.98] text-sm font-body cursor-pointer"
+              className="w-full bg-gradient-primary text-text-primary py-3.5 rounded-full font-semibold hover:opacity-90 transition-opacity active:scale-[0.98] text-sm font-body cursor-pointer"
             >
               Try Again
             </button>

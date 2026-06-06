@@ -37,11 +37,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await upsertProfile(newSession.user);
         const { data: profileData } = await getProfile(newSession.user.id);
         setProfile(profileData);
+        if (profileData?.theme) {
+          localStorage.setItem('klaivo_theme', profileData.theme);
+          const resolved = profileData.theme === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : profileData.theme;
+          document.documentElement.setAttribute('data-theme', resolved);
+        }
         setLoading(false);
       } else if (newSession?.user) {
         setLoading(true);
         const { data: profileData } = await getProfile(newSession.user.id);
         setProfile(profileData);
+        if (profileData?.theme) {
+          localStorage.setItem('klaivo_theme', profileData.theme);
+          const resolved = profileData.theme === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : profileData.theme;
+          document.documentElement.setAttribute('data-theme', resolved);
+        }
         setLoading(false);
       } else {
         setProfile(null);
