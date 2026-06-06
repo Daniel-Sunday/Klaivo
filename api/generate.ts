@@ -84,7 +84,12 @@ export default async function handler(req: Request): Promise<Response> {
           role: 'user',
           parts: parts
         }
-      ]
+      ],
+      generationConfig: {
+        thinkingConfig: {
+          thinkingBudget: 0
+        }
+      }
     };
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
