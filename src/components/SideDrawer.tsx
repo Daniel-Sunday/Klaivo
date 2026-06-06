@@ -40,6 +40,15 @@ export default function SideDrawer({ isOpen, onClose }: SideDrawerProps) {
             >
               Study History
             </button>
+            <button
+              onClick={() => {
+                navigate('/settings');
+                onClose();
+              }}
+              className="block text-left bg-transparent border-none text-[#CACAD5] hover:text-[#4F8EF7] transition-colors font-medium text-base cursor-pointer p-0 font-body"
+            >
+              Settings
+            </button>
             <a href="#" className="block text-[#CACAD5] hover:text-[#4F8EF7] transition-colors text-base font-medium">Product</a>
             <a href="#" className="block text-[#CACAD5] hover:text-[#4F8EF7] transition-colors text-base font-medium">Features</a>
             <a href="#" className="block text-[#CACAD5] hover:text-[#4F8EF7] transition-colors text-base font-medium">Pricing</a>

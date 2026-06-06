@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, ChangeEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase, getProfile } from '../lib/supabase';
 import { getGreeting } from '../lib/greeting';
 import { useStudy } from '../context/StudyContext';
@@ -16,6 +17,7 @@ const MODES = [
 
 
 export default function WelcomePage() {
+  const navigate = useNavigate();
   const { setTopic, setSelectedMode, setUploadedFile } = useStudy();
   const [firstName, setFirstName] = useState<string>('');
   const [selectedMode, setSelectedModeLocal] = useState<string | null>(null);
@@ -156,6 +158,7 @@ export default function WelcomePage() {
             <button 
               className="text-[#c2c6d5] hover:text-[#e4e1e9] transition-colors active:scale-95 duration-200 flex items-center justify-center w-8 h-8"
               onClick={() => setShowSideDrawer(true)}
+              aria-label="Menu"
             >
               <svg fill="none" height="14" viewBox="0 0 20 14" width="20" xmlns="http://www.w3.org/2000/svg">
                 <rect fill="currentColor" height="2" rx="1" width="20"></rect>
@@ -165,6 +168,15 @@ export default function WelcomePage() {
             </button>
             <span className="text-white font-['Manrope',sans-serif] font-bold text-xl leading-none">Klaivo</span>
           </div>
+
+          {/* Right-aligned Settings Icon */}
+          <button
+            onClick={() => navigate('/settings')}
+            className="text-[#c2c6d5] hover:text-[#e4e1e9] transition-colors active:scale-95 duration-200 flex items-center justify-center w-8 h-8 bg-transparent border-none cursor-pointer"
+            aria-label="Settings"
+          >
+            <span className="material-symbols-outlined text-[24px]">settings</span>
+          </button>
         </div>
       </header>
 
