@@ -66,7 +66,27 @@ export default function QuizPage() {
 
         const response = await generateQuiz({ systemPrompt, userMessage });
         if (response && response.result && Array.isArray(response.result)) {
-          setQuestions(response.result.slice(0, totalQuestions));
+          const rawQuestions = response.result;
+          const parsedQuestions = rawQuestions.map((q: any) => {
+            const questionText = q.question || q.text || '';
+            const opts = q.options || q.choices || q.answers || [];
+            const correctIndex = typeof q.correct_index === 'number' 
+              ? q.correct_index 
+              : (typeof q.correctIndex === 'number' ? q.correctIndex : 0);
+            const exp = q.explanation || q.reason || '';
+            return {
+              question: questionText,
+              options: Array.isArray(opts) ? opts : [],
+              correct_index: correctIndex,
+              explanation: exp
+            };
+          }).filter((q: any) => q.question && q.options.length > 0);
+
+          if (parsedQuestions.length > 0) {
+            setQuestions(parsedQuestions.slice(0, totalQuestions));
+          } else {
+            throw new Error('No valid quiz questions could be parsed from the generator response.');
+          }
         } else {
           throw new Error('Invalid response from quiz generator');
         }
@@ -234,6 +254,21 @@ export default function QuizPage() {
 
   // ── Active quiz state ──
   const currentQ = questions[currentIndex];
+  if (!currentQ || !Array.isArray(currentQ.options) || currentQ.options.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0F] flex flex-col items-center justify-center text-[#e4e1e9] font-['Inter',sans-serif] p-6 text-center">
+        <span className="material-symbols-outlined text-[#FF453A] text-5xl mb-4">error</span>
+        <h3 className="text-lg font-['Manrope',sans-serif] font-bold text-[#F0F0F5] mb-2">Quiz Format Error</h3>
+        <p className="text-sm text-[#CACAD5] max-w-xs mb-6">The generated quiz questions are not in the correct format.</p>
+        <button
+          onClick={() => navigate(`/result/${sessionId}`)}
+          className="px-6 py-2.5 bg-[#16161F] border border-white/10 rounded-full text-xs font-semibold hover:bg-white/5 transition-colors"
+        >
+          Back to Results
+        </button>
+      </div>
+    );
+  }
   const hasAnswered = selectedAnswer !== null;
 
   return (
