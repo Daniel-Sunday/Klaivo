@@ -1,6 +1,6 @@
 import { getAuthToken } from './supabase'
 
-const BASE_URL = import.meta.env.DEV ? 'http://localhost:3000' : 'https://klaivo.app'
+const BASE_URL = import.meta.env.DEV ? '' : 'https://klaivo.app'
 
 async function callAPI<T = any>(endpoint: string, body: Record<string, any>): Promise<T> {
   const token = await getAuthToken()

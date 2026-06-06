@@ -24,4 +24,11 @@ dist-ssr
 *.sw?
 .env
 .env.local
+.env.*
+!.env.example
 .vercel
+*.pem
+*.key
+/certs
+.cursor/mcp.json
+mcp.json
