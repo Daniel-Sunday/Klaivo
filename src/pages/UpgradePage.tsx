@@ -74,60 +74,7 @@ async function detectGeo(): Promise<Geo> {
   }
 }
 
-/* ──────────────────── Payment ────────────────────────── */
-async function initiatePaystackPayment(planId: string, email: string, userId: string) {
-  const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
-  const amounts: Record<string, number> = {
-    trial_ng: 250000,
-    monthly_ng: 1800000,
-    quarterly_ng: 4500000,
-    annual_ng: 17000000,
-  };
-  const amount = amounts[planId];
-  if (!amount || !PAYSTACK_PUBLIC_KEY) return;
-
-  const handler = (window as any).PaystackPop?.setup({
-    key: PAYSTACK_PUBLIC_KEY,
-    email,
-    amount,
-    currency: 'NGN',
-    metadata: { userId, planId },
-    callback: () => { window.location.reload(); },
-    onClose: () => {},
-  });
-  handler?.openIframe();
-}
-
-async function initiateStripePayment(planId: string, email: string, userId: string) {
-  // Stripe Checkout redirect — requires a server endpoint to create a session.
-  // For now, redirect to a placeholder checkout page.
-  const priceMap: Record<string, number> = {
-    trial_int: 300,
-    monthly_int: 1500,
-    quarterly_int: 3900,
-    annual_int: 15000,
-  };
-  const amount = priceMap[planId];
-  if (!amount) return;
-
-  // If you have a create-checkout-session endpoint, use it:
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    const res = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ planId, email, userId, amount }),
-    });
-    const json = await res.json();
-    if (json?.url) {
-      window.location.href = json.url;
-    }
-  } catch {
-    // Fallback: show a toast or handle gracefully
-    console.error('Stripe checkout session creation failed');
-  }
-}
+import { initiatePaystackPayment, initiateStripeCheckout } from '../lib/payments';
 
 /* ══════════════════════════════════════════════════════════
    UpgradePage Component
@@ -137,7 +84,19 @@ export default function UpgradePage() {
   const [geo, setGeo] = useState<Geo>('INT');
   const [selectedPlan, setSelectedPlan] = useState<string>('annual_int');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
+  const showToast = (msg: string) => setToastMessage(msg);
 
   useEffect(() => {
     detectGeo().then((g) => {
@@ -158,14 +117,18 @@ export default function UpgradePage() {
       }
       const email = user.email || '';
       const userId = user.id;
+      const planCode = selectedPlan.split('_')[0];
 
       if (geo === 'NG') {
-        await initiatePaystackPayment(selectedPlan, email, userId);
+        await initiatePaystackPayment({ email, plan: planCode, userId });
+        showToast('Payment processing... your Pro access will activate shortly.');
       } else {
-        await initiateStripePayment(selectedPlan, email, userId);
+        await initiateStripeCheckout({ email, plan: planCode, userId });
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      if (err.message !== 'PAYMENT_CANCELLED') {
+        showToast('Something went wrong. Please try again.');
+      }
     } finally {
       setProcessing(false);
     }
@@ -359,6 +322,14 @@ export default function UpgradePage() {
           </div>
         </section>
       </main>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low/90 backdrop-blur-md border border-primary/30 text-text-primary px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm">
+          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }
