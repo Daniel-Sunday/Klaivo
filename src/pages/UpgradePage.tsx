@@ -65,7 +65,7 @@ const FAQS: { q: string; a: string }[] = [
 /* ────────────────── Geo Detection ────────────────────── */
 async function detectGeo(): Promise<Geo> {
   try {
-    const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(4000) });
+    const res = await fetch('/api/detect-country', { signal: AbortSignal.timeout(4000) });
     if (!res.ok) return 'INT';
     const data = await res.json();
     return data?.country_code === 'NG' ? 'NG' : 'INT';
