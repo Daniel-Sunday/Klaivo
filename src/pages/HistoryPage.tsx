@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
@@ -70,6 +70,17 @@ export default function HistoryPage() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const loadTimeoutRef = useRef<any>(null);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+    };
+  }, []);
   
   // Search states
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,6 +98,14 @@ export default function HistoryPage() {
 
   // Load sessions from Supabase
   const loadSessions = async (pageNum: number, append = false) => {
+    if (pageNum === 0 && !append) {
+      if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = setTimeout(() => {
+        console.warn('Initial session load took too long, forcing loading to false');
+        setLoading(false);
+      }, 2500);
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -111,6 +130,12 @@ export default function HistoryPage() {
     } catch (err) {
       console.error('Error loading sessions:', err);
     } finally {
+      if (pageNum === 0 && !append) {
+        if (loadTimeoutRef.current) {
+          clearTimeout(loadTimeoutRef.current);
+          loadTimeoutRef.current = null;
+        }
+      }
       setLoading(false);
     }
   };

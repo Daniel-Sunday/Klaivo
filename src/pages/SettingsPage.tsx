@@ -14,24 +14,41 @@ export default function SettingsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
+    const timeoutId = setTimeout(() => {
+      if (active) {
+        console.warn('Profile fetch took too long, forcing loading to false');
+        setLoading(false);
+      }
+    }, 2500);
+
     const fetchProfile = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
+        if (user && active) {
           const { data } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
-          setProfile(data);
+          if (active) {
+            setProfile(data);
+          }
         }
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (active) {
+          clearTimeout(timeoutId);
+          setLoading(false);
+        }
       }
     };
     fetchProfile();
+    return () => {
+      active = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   useEffect(() => {
