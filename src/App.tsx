@@ -10,6 +10,7 @@ import QuizPage from './pages/QuizPage';
 import HistoryPage from './pages/HistoryPage';
 import AboutPage from './pages/AboutPage';
 import SettingsPage from './pages/SettingsPage';
+import UpgradePage from './pages/UpgradePage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
             <Route path="/about" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/upgrade" element={<UpgradePage />} />
           </Routes>
         </BrowserRouter>
       </StudyProvider>
