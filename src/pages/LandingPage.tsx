@@ -53,7 +53,7 @@ export default function LandingPage() {
   useEffect(() => {
     const detectCountry = async () => {
       try {
-        const response = await fetch('https://ipapi.co/json/');
+        const response = await fetch('/api/geo');
         const data = await response.json();
         if (data?.country_code === 'NG') {
           setPricingMode('ngn');
