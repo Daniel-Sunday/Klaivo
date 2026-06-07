@@ -137,12 +137,23 @@ export default function ResultPage() {
       const existingFullAnswer = (session.result_json && session.result_json[heroKey]) || '';
       const modeSchema = getModeSchema(session.mode);
 
+      // Sanitize existingFullAnswer before sending: remove or escape any unescaped quotes, newlines, or control characters
+      const sanitizedAnswer = existingFullAnswer
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
+        .replace(/(?<!\\)"/g, '\\"')
+        .replace(/(?<!\\)\n/g, '\\n')
+        .replace(/(?<!\\)\r/g, '\\r');
+
+      // Wrap the value like this before including it: const safeAnswer = JSON.stringify(existingFullAnswer) and pass the parsed value cleanly inside the body object
+      const safeAnswer = JSON.stringify(sanitizedAnswer);
+      const parsedAnswer = JSON.parse(safeAnswer) as string;
+
       const response = await refineAnswer({
         type,
         topic: session.topic,
         mode: session.mode,
         level: session.level,
-        existingFullAnswer,
+        existingFullAnswer: parsedAnswer,
         modeSchema
       });
 
