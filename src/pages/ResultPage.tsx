@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { refineAnswer, generateFollowUp, stripMarkdownForCopy } from '../lib/api';
 import { getModeSchema } from '../lib/promptBuilder';
+import { Session, FollowUp } from '../types';
 
 interface CollapsibleItem {
   question: string;
@@ -56,8 +57,8 @@ export default function ResultPage() {
   const { profile } = useAuth();
   const isPro = profile?.is_pro || false;
 
-  const [session, setSession] = useState<any>(null);
-  const [followUps, setFollowUps] = useState<any[]>([]);
+  const [session, setSession] = useState<Session | null>(null);
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [loading, setLoading] = useState(true);
   const [refining, setRefining] = useState<string | null>(null);
 
@@ -133,7 +134,7 @@ export default function ResultPage() {
     setRefining(type === 'simplify' ? 'Simplify' : 'Go Deeper');
     try {
       const heroKey = session.mode === 'write' ? 'full_draft' : session.mode === 'revise' ? 'full_notes' : 'full_answer';
-      const existingFullAnswer = session.result_json[heroKey] || '';
+      const existingFullAnswer = (session.result_json && session.result_json[heroKey]) || '';
       const modeSchema = getModeSchema(session.mode);
 
       const response = await refineAnswer({
@@ -152,7 +153,7 @@ export default function ResultPage() {
           .eq('id', sessionId);
 
         if (updateError) throw updateError;
-        setSession((prev: any) => ({ ...prev, result_json: response.result }));
+        setSession((prev) => prev ? { ...prev, result_json: response.result } : null);
         showToast(`Refinement complete!`);
       }
     } catch (err: any) {
@@ -166,7 +167,7 @@ export default function ResultPage() {
   const sendFollowUp = async (question: string): Promise<void> => {
     if (!question.trim() || followUps.length >= 3 || !session) return;
     setFollowUpLoading(true);
-    const result = session.result_json;
+    const result = session.result_json || {};
     const heroKey = session.mode === 'write' ? 'full_draft' : session.mode === 'revise' ? 'full_notes' : 'full_answer';
 
     try {
