@@ -46,48 +46,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // It fires INITIAL_SESSION synchronously on registration, so there is
     // no need for a separate getSession() call. Calling both causes GoTrue
     // lock contention — the "Lock was not released within 5000ms" error.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!mounted) return;
 
       console.log('Auth state change:', event);
       setSession(newSession);
 
-      if (event === 'SIGNED_IN' && newSession) {
-        if (!initializedRef.current) {
-          // First sign-in: show loading, upsert profile, then load it
-          setLoading(true);
-          try {
+      // Defer all asynchronous calls to prevent deadlocks on the GoTrue navigator lock.
+      // Since onAuthStateChange subscriber is executed inside GoTrue's lock acquisition,
+      // calling other Supabase API endpoints (which themselves require the lock) inside
+      // the synchronous call stack of the subscriber will deadlock the client.
+      setTimeout(async () => {
+        if (!mounted) return;
+
+        if (event === 'SIGNED_IN' && newSession) {
+          if (!initializedRef.current) {
+            // First sign-in: show loading, upsert profile, then load it
+            setLoading(true);
+            try {
+              await upsertProfile(newSession.user);
+              await loadProfile(newSession.user.id);
+              initializedRef.current = true;
+            } finally {
+              if (mounted) setLoading(false);
+            }
+          } else {
+            // Subsequent SIGNED_IN (tab refocus re-auth) — silently refresh
+            // profile in the background without touching loading state.
             await upsertProfile(newSession.user);
+            await loadProfile(newSession.user.id);
+          }
+        } else if (event === 'INITIAL_SESSION' && newSession?.user) {
+          // First load / page refresh — hydrate profile
+          try {
             await loadProfile(newSession.user.id);
             initializedRef.current = true;
           } finally {
             if (mounted) setLoading(false);
           }
-        } else {
-          // Subsequent SIGNED_IN (tab refocus re-auth) — silently refresh
-          // profile in the background without touching loading state.
-          await upsertProfile(newSession.user);
+        } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
+          // Tab re-focus / background refresh — session is already set above,
+          // silently refresh profile without flashing a loading screen.
           await loadProfile(newSession.user.id);
+        } else if (event === 'SIGNED_OUT' || !newSession) {
+          setProfile(null);
+          setLoading(false);
+        } else if (event === 'INITIAL_SESSION' && !newSession) {
+          // No existing session on first load
+          setLoading(false);
         }
-      } else if (event === 'INITIAL_SESSION' && newSession?.user) {
-        // First load / page refresh — hydrate profile
-        try {
-          await loadProfile(newSession.user.id);
-          initializedRef.current = true;
-        } finally {
-          if (mounted) setLoading(false);
-        }
-      } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
-        // Tab re-focus / background refresh — session is already set above,
-        // silently refresh profile without flashing a loading screen.
-        await loadProfile(newSession.user.id);
-      } else if (event === 'SIGNED_OUT' || !newSession) {
-        setProfile(null);
-        setLoading(false);
-      } else if (event === 'INITIAL_SESSION' && !newSession) {
-        // No existing session on first load
-        setLoading(false);
-      }
+      }, 0);
     });
 
     subscriptionRef.current = subscription;
