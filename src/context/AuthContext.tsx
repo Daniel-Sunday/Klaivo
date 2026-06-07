@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { supabase, getProfile, upsertProfile } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
+import type { Subscription } from '@supabase/supabase-js';
 
 interface AuthContextType {
   session: Session | null;
@@ -16,62 +17,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Prevent StrictMode double-subscription — only one listener at a time
+  const subscriptionRef = useRef<Subscription | null>(null);
+
   useEffect(() => {
-    const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        const { data: profileData } = await getProfile(session.user.id);
-        setProfile(profileData);
+    // Guard against stale async callbacks after unmount
+    let mounted = true;
+
+    // Helper: load profile and apply theme
+    const loadProfile = async (userId: string) => {
+      const { data: profileData } = await getProfile(userId);
+      if (!mounted) return;
+      setProfile(profileData);
+      if (profileData?.theme) {
+        localStorage.setItem('klaivo_theme', profileData.theme);
+        const resolved = profileData.theme === 'system'
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : profileData.theme;
+        document.documentElement.setAttribute('data-theme', resolved);
       }
-      setLoading(false);
     };
 
-    initializeAuth();
-
+    // Use onAuthStateChange as the SOLE source of session truth.
+    // It fires INITIAL_SESSION synchronously on registration, so there is
+    // no need for a separate getSession() call. Calling both causes GoTrue
+    // lock contention — the "Lock was not released within 5000ms" error.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log('Auth state change:', event, newSession);
+      if (!mounted) return;
+
+      console.log('Auth state change:', event);
       setSession(newSession);
+
       if (event === 'SIGNED_IN' && newSession) {
+        // Full sign-in: upsert profile, then load it
         setLoading(true);
-        await upsertProfile(newSession.user);
-        const { data: profileData } = await getProfile(newSession.user.id);
-        setProfile(profileData);
-        if (profileData?.theme) {
-          localStorage.setItem('klaivo_theme', profileData.theme);
-          const resolved = profileData.theme === 'system'
-            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-            : profileData.theme;
-          document.documentElement.setAttribute('data-theme', resolved);
+        try {
+          await upsertProfile(newSession.user);
+          await loadProfile(newSession.user.id);
+        } finally {
+          if (mounted) setLoading(false);
         }
-        setLoading(false);
-      } else if (newSession?.user) {
-        setLoading(true);
-        const { data: profileData } = await getProfile(newSession.user.id);
-        setProfile(profileData);
-        if (profileData?.theme) {
-          localStorage.setItem('klaivo_theme', profileData.theme);
-          const resolved = profileData.theme === 'system'
-            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-            : profileData.theme;
-          document.documentElement.setAttribute('data-theme', resolved);
+      } else if (event === 'INITIAL_SESSION' && newSession?.user) {
+        // First load / page refresh — hydrate profile
+        try {
+          await loadProfile(newSession.user.id);
+        } finally {
+          if (mounted) setLoading(false);
         }
-        setLoading(false);
-      } else {
+      } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
+        // Tab re-focus / background refresh — session is already set above,
+        // silently refresh profile without flashing a loading screen.
+        await loadProfile(newSession.user.id);
+      } else if (event === 'SIGNED_OUT' || !newSession) {
         setProfile(null);
+        setLoading(false);
+      } else if (event === 'INITIAL_SESSION' && !newSession) {
+        // No existing session on first load
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    subscriptionRef.current = subscription;
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      subscriptionRef.current = null;
+    };
   }, []);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (session?.user) {
       const { data: profileData } = await getProfile(session.user.id);
       setProfile(profileData);
     }
-  };
+  }, [session]);
 
   return (
     <AuthContext.Provider value={{ session, profile, loading, refreshProfile }}>
