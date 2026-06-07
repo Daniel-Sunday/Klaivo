@@ -46,6 +46,15 @@ export default function WelcomePage() {
     loadProfile();
   }, []);
 
+  // Check for upgraded subscription success URL parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('upgraded') === 'true') {
+      setToastMessage('◆ Welcome to Pro. No more limits.');
+      window.history.replaceState({}, '', '/home');
+    }
+  }, []);
+
   // Toast automatic dismiss effect
   useEffect(() => {
     if (toastMessage) {
@@ -308,10 +317,16 @@ export default function WelcomePage() {
         </div>
       )}
 
-      {/* Custom Alert/Error Toast */}
+      {/* Custom Alert/Error/Success Toast */}
       {toastMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low/90 backdrop-blur-md border border-danger/30 text-text-primary px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm">
-          <span className="material-symbols-outlined text-danger text-[20px]">error</span>
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low/90 backdrop-blur-md text-text-primary px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm border ${
+          toastMessage.startsWith('◆') ? 'border-primary/30' : 'border-danger/30'
+        }`}>
+          {toastMessage.startsWith('◆') ? (
+            <span className="material-symbols-outlined text-primary text-[20px]">workspace_premium</span>
+          ) : (
+            <span className="material-symbols-outlined text-danger text-[20px]">error</span>
+          )}
           <span>{toastMessage}</span>
         </div>
       )}
