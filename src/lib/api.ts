@@ -1,6 +1,6 @@
 import { getAuthToken } from './supabase'
 
-const BASE_URL = import.meta.env.DEV ? '' : 'https://klaivo.app'
+const BASE_URL = import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? '' : 'https://klaivo.app');
 
 async function callAPI<T = any>(endpoint: string, body: Record<string, any>): Promise<T> {
   const token = await getAuthToken()
@@ -12,12 +12,17 @@ async function callAPI<T = any>(endpoint: string, body: Record<string, any>): Pr
     body: JSON.stringify(body)
   })
 
-  if (response.status === 401) throw new Error('NOT_AUTHENTICATED')
-  if (response.status === 402) throw new Error('FREE_LIMIT_REACHED')
-  if (response.status === 429) throw new Error('RATE_LIMIT_EXCEEDED')
-  if (!response.ok) throw new Error(`API_ERROR_${response.status}`)
-
-  return response.json()
+  const raw = await response.text().catch(() => '');
+  let json: any = null;
+  try { json = raw ? JSON.parse(raw) : null; } catch {}
+  if (response.status === 401) throw new Error(json?.message || 'NOT_AUTHENTICATED');
+  if (response.status === 402) throw new Error(json?.message || 'FREE_LIMIT_REACHED');
+  if (response.status === 429) throw new Error(json?.message || 'RATE_LIMIT_EXCEEDED');
+  if (!response.ok) {
+    const message = json?.message || `API_ERROR_${response.status}`;
+    throw new Error(message);
+  }
+  return json;
 }
 
 interface GenerateAnswerOptions {
