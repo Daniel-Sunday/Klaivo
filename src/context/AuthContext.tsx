@@ -20,6 +20,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Prevent StrictMode double-subscription — only one listener at a time
   const subscriptionRef = useRef<Subscription | null>(null);
 
+  // Track whether the first session load is complete so that subsequent
+  // SIGNED_IN events (fired on tab refocus re-auth) don't flash a loading screen.
+  const initializedRef = useRef(false);
+
   useEffect(() => {
     // Guard against stale async callbacks after unmount
     let mounted = true;
@@ -49,18 +53,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(newSession);
 
       if (event === 'SIGNED_IN' && newSession) {
-        // Full sign-in: upsert profile, then load it
-        setLoading(true);
-        try {
+        if (!initializedRef.current) {
+          // First sign-in: show loading, upsert profile, then load it
+          setLoading(true);
+          try {
+            await upsertProfile(newSession.user);
+            await loadProfile(newSession.user.id);
+            initializedRef.current = true;
+          } finally {
+            if (mounted) setLoading(false);
+          }
+        } else {
+          // Subsequent SIGNED_IN (tab refocus re-auth) — silently refresh
+          // profile in the background without touching loading state.
           await upsertProfile(newSession.user);
           await loadProfile(newSession.user.id);
-        } finally {
-          if (mounted) setLoading(false);
         }
       } else if (event === 'INITIAL_SESSION' && newSession?.user) {
         // First load / page refresh — hydrate profile
         try {
           await loadProfile(newSession.user.id);
+          initializedRef.current = true;
         } finally {
           if (mounted) setLoading(false);
         }
