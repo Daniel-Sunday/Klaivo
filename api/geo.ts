@@ -21,19 +21,39 @@ export default async function handler(req: Request): Promise<Response> {
   };
 
   try {
-    let countryCode = req.headers.get('x-vercel-ip-country');
+    // 1. Allow query parameter override for testing/local dev (e.g. /api/geo?geo=NG)
+    const url = new URL(req.url);
+    let countryCode = url.searchParams.get('geo') || req.headers.get('x-local-geo');
 
-    // In local development or if Vercel geo header is not available,
-    // fetch from ipapi from the server-side to avoid CORS issues.
+    // 2. Check official Vercel Geo-IP header (production)
     if (!countryCode) {
+      countryCode = req.headers.get('x-vercel-ip-country');
+    }
+
+    // 3. Fallbacks for local development (no Vercel header)
+    if (!countryCode) {
+      // Try api.country.is (very fast and reliable)
       try {
-        const ipapiRes = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
-        if (ipapiRes.ok) {
-          const data = await ipapiRes.json();
-          countryCode = data?.country_code || null;
+        const res = await fetch('https://api.country.is', { signal: AbortSignal.timeout(2000) });
+        if (res.ok) {
+          const data = await res.json();
+          countryCode = data?.country || null;
         }
       } catch (e) {
-        console.error('Failed to detect country via server-side ipapi:', e);
+        console.error('Failed to detect country via api.country.is:', e);
+      }
+
+      // If api.country.is fails, try freeipapi.com as secondary fallback
+      if (!countryCode) {
+        try {
+          const res = await fetch('https://freeipapi.com/api/json', { signal: AbortSignal.timeout(2000) });
+          if (res.ok) {
+            const data = await res.json();
+            countryCode = data?.countryCode || null;
+          }
+        } catch (e) {
+          console.error('Failed to detect country via freeipapi.com:', e);
+        }
       }
     }
 
