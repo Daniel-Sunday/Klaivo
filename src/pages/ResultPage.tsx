@@ -494,7 +494,10 @@ export default function ResultPage() {
               {['Simplify', 'Go Deeper'].map(type => (
                 <button
                   key={type}
-                  onClick={() => handleRefine(type.toLowerCase().replace(' ', '_'))}
+                  onClick={() => {
+                    const map: Record<string, string> = { Simplify: 'simplify', 'Go Deeper': 'go_deeper' };
+                    handleRefine(map[type] || type.toLowerCase());
+                  }}
                   className="px-3 py-1.5 rounded-full text-xs font-medium ghost-border text-text-secondary hover:text-text-body hover:border-white/15 transition-all flex items-center gap-1.5"
                   disabled={refining !== null}
                 >
