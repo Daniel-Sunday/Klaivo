@@ -1,1 +1,1 @@
-{"root":["./vite.config.js","./eslint.config.js","./postcss.config.js","./tailwind.config.js"],"version":"6.0.3"}
+{"root":["./vite.config.js","./eslint.config.js","./tailwind.config.js"],"version":"6.0.3"}
