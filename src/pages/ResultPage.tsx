@@ -120,9 +120,10 @@ export default function ResultPage() {
   const handleShare = async () => {
     try {
       await supabase.from('sessions').update({ is_shared: true }).eq('id', sessionId);
-      const shareUrl = `https://klaivo.app/s/${sessionId}`;
+      setSession((prev) => prev ? { ...prev, is_shared: true } : null);
+      const shareUrl = `${window.location.origin}/s/${sessionId}`;
       await navigator.clipboard.writeText(shareUrl);
-      showToast('Link copied — share it with anyone ✓');
+      showToast('Share link copied ✓ — send it to anyone');
     } catch (err: any) {
       console.error(err);
       showToast('Failed to copy link');
@@ -321,13 +322,21 @@ export default function ResultPage() {
               {session.topic}
             </h1>
           </div>
-          <button 
-            onClick={handleShare}
-            className="text-text-secondary hover:text-text-body p-2 hover:bg-surface-low rounded-full transition-colors flex items-center justify-center"
-            aria-label="Share"
-          >
-            <span className="material-symbols-outlined text-[20px]">share</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {session.is_shared && (
+              <span className="text-[10px] bg-accent/20 text-accent font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider select-none">
+                Shared
+              </span>
+            )}
+            <button 
+              onClick={handleShare}
+              className="text-text-secondary hover:text-text-body p-2 hover:bg-surface-low rounded-full transition-colors flex items-center justify-center bg-transparent border-none cursor-pointer"
+              aria-label="Share"
+              title="Share this result"
+            >
+              <span className="material-symbols-outlined text-[20px]">share</span>
+            </button>
+          </div>
         </div>
       </header>
 

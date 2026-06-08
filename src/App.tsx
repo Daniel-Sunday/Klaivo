@@ -13,6 +13,7 @@ import SettingsPage from './pages/SettingsPage';
 import UpgradePage from './pages/UpgradePage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+import SharedResultPage from './pages/SharedResultPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/upgrade" element={<UpgradePage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/s/:sessionId" element={<SharedResultPage />} />
           </Routes>
         </BrowserRouter>
       </StudyProvider>
