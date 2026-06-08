@@ -26,7 +26,7 @@ const faqItems: FaqItem[] = [
   {
     question: 'Can I upload my lecture notes or textbooks?',
     answer:
-      'Yes. Pro users can upload PDFs, documents, and images of their notes. Klaivo reads your materials and builds answers directly from your course content.',
+      'Yes. Pro users can upload images of their notes and study materials. Klaivo reads your photos and builds answers directly from what you uploaded.',
   },
   {
     question: 'What subjects does Klaivo cover?',
@@ -40,11 +40,21 @@ const faqItems: FaqItem[] = [
   },
 ];
 
+const GEO_PRICING = {
+  NG: { trial: '₦2,500', monthly: '₦18,000', quarterly: '₦45,000', annual: '₦170,000', trialDays: 7, currency: '₦' },
+  GH: { trial: '₵18',    monthly: '₵200',    quarterly: '₵540',    annual: '₵2,000',   trialDays: 7, currency: '₵' },
+  KE: { trial: 'KSh 400', monthly: 'KSh 4,500', quarterly: 'KSh 12,000', annual: 'KSh 45,000', trialDays: 7, currency: 'KSh' },
+  ZA: { trial: 'R35',    monthly: 'R400',    quarterly: 'R1,050',   annual: 'R3,900',   trialDays: 7, currency: 'R' },
+  IN: { trial: '₹100',   monthly: '₹1,200',  quarterly: '₹3,200',   annual: '₹12,000',  trialDays: 7, currency: '₹' },
+  default: { trial: '$3', monthly: '$15', quarterly: '$39', annual: '$150', trialDays: 7, currency: '$' },
+};
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const [openFaqIndex, setOpenFaqIndex] = useState<number>(0);
-  const [pricingMode, setPricingMode] = useState<'usd' | 'ngn'>('usd');
-  const [showLocalPricingHint, setShowLocalPricingHint] = useState<boolean>(false);
+  const [selectedCountry, setSelectedCountry] = useState<keyof typeof GEO_PRICING>('default');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'quarterly' | 'annual'>('monthly');
+  const [geoFailed, setGeoFailed] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [email, setEmail] = useState<string>('');
   const [authMessage, setAuthMessage] = useState<string>('');
@@ -54,17 +64,19 @@ export default function LandingPage() {
     const detectCountry = async () => {
       try {
         const response = await fetch('/api/geo');
-        const data = await response.json();
-        if (data?.country_code === 'NG') {
-          setPricingMode('ngn');
-          setShowLocalPricingHint(false);
-          return;
+        if (!response.ok) {
+          throw new Error('Geo fetch failed');
         }
-        setPricingMode('usd');
-        setShowLocalPricingHint(true);
+        const data = await response.json();
+        const countryCode = data?.country_code;
+        if (countryCode && countryCode in GEO_PRICING) {
+          setSelectedCountry(countryCode as keyof typeof GEO_PRICING);
+        } else {
+          setSelectedCountry('default');
+        }
       } catch {
-        setPricingMode('usd');
-        setShowLocalPricingHint(true);
+        setSelectedCountry('default');
+        setGeoFailed(true);
       }
     };
 
@@ -100,8 +112,8 @@ export default function LandingPage() {
     }
   };
 
-  const proMonthlyPrice = pricingMode === 'ngn' ? '₦1,250' : '$4.99';
-  const freePrice = pricingMode === 'ngn' ? '₦0' : '$0';
+  const pricing = GEO_PRICING[selectedCountry];
+  const freePrice = pricing.currency === 'KSh' ? 'KSh 0' : `${pricing.currency}0`;
 
   return (
     <div className="bg-surface-dim text-on-surface font-body antialiased selection:bg-primary selection:text-on-primary">
@@ -220,11 +232,11 @@ export default function LandingPage() {
             )}
             <p className="text-xs text-text-secondary pt-4 leading-relaxed">
               By continuing, you agree to Klaivo&apos;s{' '}
-              <a className="underline hover:text-text-body transition-colors" href="#">
+              <a className="underline hover:text-text-body transition-colors" href="/terms">
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a className="underline hover:text-text-body transition-colors" href="#">
+              <a className="underline hover:text-text-body transition-colors" href="/privacy">
                 Privacy Policy
               </a>
               .
@@ -319,10 +331,41 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section className="px-6 py-16 bg-surface-container-low max-w-5xl mx-auto rounded-3xl border border-border-subtle/50 mb-32 flex flex-col items-center text-center relative overflow-hidden">
+          <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 space-y-4">
+            <p className="text-xs uppercase tracking-widest text-primary font-semibold font-label">
+              A study tool built differently.
+            </p>
+            <h2 className="font-headline text-3xl md:text-5xl font-extrabold tracking-tight text-text-primary">
+              Join our early users
+            </h2>
+          </div>
+        </section>
+
         <section id="pricing" className="px-6 max-w-5xl mx-auto mb-32 text-center">
-          <h2 className="font-headline text-3xl md:text-4xl font-bold tracking-tight text-text-primary mb-12">
+          <h2 className="font-headline text-3xl md:text-4xl font-bold tracking-tight text-text-primary mb-6">
             Simple pricing. No surprises.
           </h2>
+
+          <div className="flex justify-center mb-10">
+            <div className="inline-flex rounded-full bg-surface-container-low p-1 border border-border-subtle/50">
+              {(['monthly', 'quarterly', 'annual'] as const).map((cycle) => (
+                <button
+                  key={cycle}
+                  onClick={() => setBillingCycle(cycle)}
+                  className={`px-6 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-300 ${
+                    billingCycle === cycle
+                      ? 'bg-gradient-primary text-text-primary shadow-lg'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {cycle}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto text-left">
             <div className="bg-surface-container-low ghost-border p-8 rounded-3xl flex flex-col">
               <h3 className="font-headline text-2xl font-bold text-text-primary mb-2">Free</h3>
@@ -362,12 +405,16 @@ export default function LandingPage() {
               </div>
               <h3 className="font-headline text-2xl font-bold text-primary mb-2">Pro</h3>
               <div className="text-text-body mb-8 text-sm">For absolute academic clarity.</div>
-              <div className="text-3xl font-headline font-bold text-text-primary mb-8">
-                {proMonthlyPrice}
-                <span className="text-sm font-normal text-text-secondary">/month</span>
-                {pricingMode === 'ngn' && (
-                  <div className="text-sm font-normal text-text-secondary mt-2">₦3,500/3 months</div>
-                )}
+              <div className="mb-8">
+                <div className="text-3xl font-headline font-bold text-text-primary">
+                  {pricing[billingCycle]}
+                  <span className="text-sm font-normal text-text-secondary ml-1">
+                    /{billingCycle === 'monthly' ? 'month' : billingCycle === 'quarterly' ? 'quarter' : 'year'}
+                  </span>
+                </div>
+                <div className="text-xs text-text-secondary mt-2">
+                  Includes {pricing.trialDays}-day trial for only {pricing.trial}
+                </div>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
                 <li className="flex items-center gap-3 text-sm text-text-body">
@@ -376,27 +423,31 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-center gap-3 text-sm text-text-body">
                   <span className="material-symbols-outlined text-primary text-sm">check</span>
-                  Unlimited material uploads
+                  Unlimited photo & material uploads
                 </li>
                 <li className="flex items-center gap-3 text-sm text-text-body">
                   <span className="material-symbols-outlined text-primary text-sm">check</span>
-                  Advanced study modes
+                  Advanced study modes (flashcards & quizzes)
+                </li>
+                <li className="flex items-center gap-3 text-sm text-text-body">
+                  <span className="material-symbols-outlined text-primary text-sm">check</span>
+                  No advertisements
                 </li>
               </ul>
               <button
                 className="w-full bg-gradient-primary text-text-primary rounded-full py-3 font-semibold hover:opacity-90 transition-opacity"
                 onClick={() => navigate('/onboarding')}
               >
-                Upgrade to Pro
+                Start Free Trial
               </button>
             </div>
           </div>
-          {showLocalPricingHint && pricingMode !== 'ngn' && (
+          {geoFailed && selectedCountry !== 'NG' && (
             <button
-              className="mt-6 text-center text-text-secondary text-sm hover:text-text-body transition-colors"
-              onClick={() => setPricingMode('ngn')}
+              className="mt-6 text-center text-text-secondary text-sm hover:text-text-body transition-colors underline"
+              onClick={() => setSelectedCountry('NG')}
             >
-              Based in Nigeria? See local pricing
+              See pricing in ₦
             </button>
           )}
         </section>
@@ -441,13 +492,13 @@ export default function LandingPage() {
           <div className="flex flex-wrap justify-center gap-6">
             <a
               className="text-text-secondary hover:text-text-primary text-sm underline-offset-4 hover:underline transition-colors"
-              href="#"
+              href="/privacy"
             >
               Privacy Policy
             </a>
             <a
               className="text-text-secondary hover:text-text-primary text-sm underline-offset-4 hover:underline transition-colors"
-              href="#"
+              href="/terms"
             >
               Terms of Service
             </a>
