@@ -38,3 +38,13 @@ export async function getAuthToken(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
   return session?.access_token || null;
 }
+
+export function isUserPro(profile: any) {
+  if (!profile?.is_pro) return false;
+  if (!profile?.pro_expires_at) return false;
+  return new Date(profile.pro_expires_at) > new Date();
+}
+
+export function isUserTrial(profile: any) {
+  return isUserPro(profile) && profile?.is_trial === true;
+}

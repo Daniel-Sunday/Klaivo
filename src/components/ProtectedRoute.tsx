@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { isUserPro } from '../lib/supabase';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -23,6 +24,6 @@ export function ProtectedRoute({ children, requirePro = false }: ProtectedRouteP
     </div>
   );
   if (!profile.onboarding_complete) return <Navigate to="/onboarding" replace />;
-  if (requirePro && !profile.is_pro) return <Navigate to="/upgrade" replace />;
+  if (requirePro && !isUserPro(profile)) return <Navigate to="/upgrade" replace />;
   return <>{children}</>;
 }

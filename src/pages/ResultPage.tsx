@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase, isUserPro } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { refineAnswer, generateFollowUp, stripMarkdownForCopy } from '../lib/api';
 import { getModeSchema } from '../lib/promptBuilder';
@@ -55,7 +55,7 @@ export default function ResultPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const isPro = profile?.is_pro || false;
+  const isPro = isUserPro(profile);
 
   const [session, setSession] = useState<Session | null>(null);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);

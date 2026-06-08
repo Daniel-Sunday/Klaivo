@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { isUserPro } from '../lib/supabase';
 
 interface SideDrawerProps {
   isOpen: boolean;
@@ -9,7 +10,7 @@ interface SideDrawerProps {
 export default function SideDrawer({ isOpen, onClose }: SideDrawerProps) {
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const isPro = profile?.is_pro || false;
+  const isPro = isUserPro(profile);
 
   if (!isOpen) return null;
 

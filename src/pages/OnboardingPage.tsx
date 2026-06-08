@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -27,6 +27,24 @@ export default function OnboardingPage() {
   const [screen, setScreen] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedLevel, setSelectedLevel] = useState<string>('');
+  const [selectedInstitution, setSelectedInstitution] = useState<string>('');
+  
+  const hasResumed = useRef(false);
+
+  useEffect(() => {
+    if (profile && !hasResumed.current) {
+      if (profile.academic_level) {
+        setSelectedLevel(profile.academic_level);
+      }
+      if (profile.institution_type) {
+        setSelectedInstitution(profile.institution_type);
+      }
+      if (profile.onboarding_step === 1) setScreen(1);
+      if (profile.onboarding_step === 2) setScreen(2);
+      if (profile.onboarding_step === 3) setScreen(3);
+      hasResumed.current = true;
+    }
+  }, [profile]);
 
   useEffect(() => {
     // Only redirect if profile is loaded and onboarding is complete
@@ -37,24 +55,71 @@ export default function OnboardingPage() {
     }
   }, [profile, navigate]);
 
-  const handleLevelSelect = (level: string) => {
+  const handleStartOnboarding = async () => {
+    if (!session?.user) return;
+    setScreen(2);
+    try {
+      await supabase
+        .from('profiles')
+        .update({ onboarding_step: 2 })
+        .eq('id', session.user.id);
+    } catch (err) {
+      console.error('Failed to update onboarding step to 2:', err);
+    }
+  };
+
+  const handleLevelSelect = async (level: string) => {
     setSelectedLevel(level);
 
     if (session?.user) {
-      // Fire Supabase save in background without awaiting
-      supabase
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ academic_level: level })
+          .eq('id', session.user.id);
+        if (error) console.error('Failed to save academic level:', error);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const handleInstitutionSelect = async (type: string) => {
+    setSelectedInstitution(type);
+    if (!session?.user) return;
+
+    try {
+      const { error } = await supabase
         .from('profiles')
-        .update({ academic_level: level })
-        .eq('id', session.user.id)
-        .then(({ error }) => {
-          if (error) console.error('Failed to save academic level:', error);
-        });
+        .update({ 
+          institution_type: type,
+          onboarding_step: 3
+        })
+        .eq('id', session.user.id);
+      if (error) console.error('Failed to save institution type:', error);
+    } catch (err) {
+      console.error('Failed to save institution type:', err);
     }
 
-    // Transition to Screen 3 after 500ms delay
     setTimeout(() => {
       setScreen(3);
     }, 500);
+  };
+
+  const handleSkipInstitution = async () => {
+    if (!session?.user) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          onboarding_step: 3
+        })
+        .eq('id', session.user.id);
+      if (error) console.error('Failed to skip institution type:', error);
+    } catch (err) {
+      console.error('Failed to skip institution type:', err);
+    }
+    setScreen(3);
   };
 
   const handleCompleteOnboarding = async () => {
@@ -70,7 +135,8 @@ export default function OnboardingPage() {
         .upsert({
           id: session.user.id,
           email: session.user.email,
-          onboarding_complete: true
+          onboarding_complete: true,
+          onboarding_step: 0
         }, { onConflict: 'id' })
         .select()
         .maybeSingle();
@@ -135,13 +201,21 @@ export default function OnboardingPage() {
             </p>
           </div>
 
-          <button
-            className="w-full max-w-sm bg-gradient-primary text-white py-3 rounded-full font-medium hover:opacity-90 transition-opacity"
-            style={{ animationDelay: '2000ms', animation: 'fadeIn 0.5s ease-out forwards', opacity: 0 }}
-            onClick={() => setScreen(2)}
-          >
-            Let's get started
-          </button>
+          <div className="flex flex-col items-center space-y-3 w-full">
+            <button
+              className="w-full max-w-sm bg-gradient-primary text-white py-3 rounded-full font-medium hover:opacity-90 transition-opacity"
+              style={{ animationDelay: '2000ms', animation: 'fadeIn 0.5s ease-out forwards', opacity: 0 }}
+              onClick={handleStartOnboarding}
+            >
+              Let's get started →
+            </button>
+            <p
+              className="text-[12px] text-[#3D3D52] font-['Inter'] text-center max-w-xs leading-normal"
+              style={{ animationDelay: '2200ms', animation: 'fadeIn 0.5s ease-out forwards', opacity: 0 }}
+            >
+              By continuing, you confirm you're 13 or older and agree to our Terms of Service and Privacy Policy.
+            </p>
+          </div>
         </div>
       )}
 
@@ -173,6 +247,44 @@ export default function OnboardingPage() {
               </button>
             ))}
           </div>
+
+          {selectedLevel && (
+            <div className="w-full mt-6 space-y-4 animate-fade-in">
+              <p className="text-[13px] text-text-secondary font-['Inter'] font-medium">
+                What kind of institution are you at?
+              </p>
+              <div className="w-full space-y-2.5">
+                {[
+                  'University',
+                  'Polytechnic',
+                  'College of Education',
+                  'Secondary School',
+                  'Self-study'
+                ].map((type) => (
+                  <button
+                    key={type}
+                    style={{
+                      borderColor: selectedInstitution === type ? 'var(--accent-border)' : 'var(--ghost-border)',
+                      background: selectedInstitution === type ? 'var(--accent-subtle)' : 'var(--bg-secondary)',
+                      color: selectedInstitution === type ? 'var(--accent)' : 'var(--text-body)'
+                    }}
+                    className="w-full h-[46px] rounded-full border font-['Inter'] text-[14px] font-medium transition-all hover:bg-surface-low"
+                    onClick={() => handleInstitutionSelect(type)}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+              <div>
+                <button
+                  onClick={handleSkipInstitution}
+                  className="text-xs text-text-secondary hover:text-text-primary transition-colors underline bg-transparent border-none outline-none cursor-pointer mt-1"
+                >
+                  Skip
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -206,6 +318,9 @@ export default function OnboardingPage() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.4s ease-out forwards;
         }
       `}</style>
     </div>
