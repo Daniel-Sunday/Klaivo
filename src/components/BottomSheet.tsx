@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase, getProfile } from '../lib/supabase';
 import { generateAnswer, compressImage } from '../lib/api';
 import { buildStudyPrompt, analysePrompt } from '../lib/promptBuilder';
+import { analytics } from '../lib/analytics';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -324,6 +325,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
   };
 
   const startGenerating = async (finalAnswers: Record<string, any>) => {
+    const startTime = Date.now();
     setSheetState('generating');
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -342,6 +344,8 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
         'Postgraduate': 'postgrad'
       };
       const mappedLevel = levelMap[finalLevel] || finalLevel || '100_200';
+
+      analytics.sessionStarted(mode, mappedLevel, !!uploadedFile);
 
       const finalDepth = finalAnswers.depth || detected.depth || 'solid';
 
@@ -430,6 +434,8 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
       }
 
       if (sessionRecord) {
+        const durationMs = Date.now() - startTime;
+        analytics.sessionCompleted(mode, mappedLevel, durationMs, topic);
         navigate(`/result/${sessionRecord.id}`);
         onClose();
       }

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { refineAnswer, generateFollowUp, stripMarkdownForCopy } from '../lib/api';
 import { getModeSchema } from '../lib/promptBuilder';
 import { Session, FollowUp } from '../types';
+import { analytics } from '../lib/analytics';
 
 interface CollapsibleItem {
   question: string;
@@ -114,6 +115,7 @@ export default function ResultPage() {
     navigator.clipboard.writeText(stripMarkdownForCopy(text));
     setCopiedCardKey(key);
     showToast('Copied to clipboard ✓');
+    analytics.resultCopied();
     setTimeout(() => setCopiedCardKey(null), 3000);
   };
 
@@ -124,6 +126,7 @@ export default function ResultPage() {
       const shareUrl = `${window.location.origin}/s/${sessionId}`;
       await navigator.clipboard.writeText(shareUrl);
       showToast('Share link copied ✓ — send it to anyone');
+      analytics.shareResultTapped();
     } catch (err: any) {
       console.error(err);
       showToast('Failed to copy link');
@@ -133,6 +136,7 @@ export default function ResultPage() {
   const handleRefine = async (type: string) => {
     if (!session) return;
     setRefining(type === 'simplify' ? 'Simplify' : 'Go Deeper');
+    analytics.refinementUsed(type);
     try {
       const heroKey = session.mode === 'write' ? 'full_draft' : session.mode === 'revise' ? 'full_notes' : 'full_answer';
       const existingFullAnswer = (session.result_json && session.result_json[heroKey]) || '';
@@ -179,6 +183,7 @@ export default function ResultPage() {
   const sendFollowUp = async (question: string): Promise<void> => {
     if (!question.trim() || followUps.length >= 3 || !session) return;
     setFollowUpLoading(true);
+    analytics.followUpSent(question.length);
     const result = session.result_json || {};
     const heroKey = session.mode === 'write' ? 'full_draft' : session.mode === 'revise' ? 'full_notes' : 'full_answer';
 
@@ -540,6 +545,7 @@ export default function ResultPage() {
                     if (isPro) {
                       navigate(`/${f.route}/${sessionId}`);
                     } else {
+                      analytics.proFeatureTapped(f.route);
                       navigate(`/upgrade?from=${f.route}`);
                     }
                   }}

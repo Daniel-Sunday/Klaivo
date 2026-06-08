@@ -75,6 +75,7 @@ async function detectGeo(): Promise<Geo> {
 }
 
 import { initiatePaystackPayment, initiateStripeCheckout } from '../lib/payments';
+import { analytics } from '../lib/analytics';
 
 /* ══════════════════════════════════════════════════════════
    UpgradePage Component
@@ -103,6 +104,10 @@ export default function UpgradePage() {
       setGeo(g);
       setSelectedPlan(g === 'NG' ? 'annual_ng' : 'annual_int');
     });
+
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get('from') || 'direct';
+    analytics.upgradePageViewed(from);
   }, []);
 
   const plans = geo === 'NG' ? NG_PLANS : INT_PLANS;

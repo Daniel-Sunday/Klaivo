@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { analytics } from '../lib/analytics';
 
 interface Session {
   id: string;
@@ -73,8 +74,9 @@ export default function HistoryPage() {
 
   const loadTimeoutRef = useRef<any>(null);
 
-  // Clean up timeout on unmount
+  // Clean up timeout on unmount and track page view
   useEffect(() => {
+    analytics.historyViewed();
     return () => {
       if (loadTimeoutRef.current) {
         clearTimeout(loadTimeoutRef.current);

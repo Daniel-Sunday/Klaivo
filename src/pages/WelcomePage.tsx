@@ -6,6 +6,7 @@ import { useStudy } from '../context/StudyContext';
 import BottomSheet from '../components/BottomSheet';
 import SideDrawer from '../components/SideDrawer';
 import { compressImage } from '../lib/api';
+import { analytics } from '../lib/analytics';
 
 const MODES = [
   { id: 'understand', label: 'Understand', icon: 'psychology' },
@@ -24,7 +25,7 @@ export default function WelcomePage() {
   const [topic, setTopicLocal] = useState<string>('');
   const [uploadedFile, setUploadedFileLocal] = useState<File | null>(null);
   const [showBottomSheet, setShowBottomSheet] = useState<boolean>(false);
-  const [showLimitMessage] = useState<boolean>(false);
+  const [showLimitMessage, setShowLimitMessage] = useState<boolean>(false);
   const [showSideDrawer, setShowSideDrawer] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,6 +42,10 @@ export default function WelcomePage() {
       if (user) {
         const { data: profileData } = await getProfile(user.id);
         setFirstName(profileData?.first_name || 'there');
+        if (profileData && !profileData.is_pro && profileData.daily_count >= 3) {
+          setShowLimitMessage(true);
+          analytics.dailyLimitHit();
+        }
       }
     };
     loadProfile();
@@ -50,6 +55,7 @@ export default function WelcomePage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('upgraded') === 'true') {
+      analytics.paymentCompleted('stripe', 'pro');
       setToastMessage('◆ Welcome to Pro. No more limits.');
       window.history.replaceState({}, '', '/home');
     }
@@ -112,6 +118,7 @@ export default function WelcomePage() {
 
     setUploadedFileLocal(file);
     setUploadedFile(file);
+    analytics.imageUploaded();
 
     // Read as base64 and compress for API call
     console.log("Starting image compression...");
