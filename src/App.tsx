@@ -14,6 +14,7 @@ import UpgradePage from './pages/UpgradePage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import SharedResultPage from './pages/SharedResultPage';
+import AdminPage from './pages/AdminPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/s/:sessionId" element={<SharedResultPage />} />
+            <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>} />
           </Routes>
         </BrowserRouter>
       </StudyProvider>

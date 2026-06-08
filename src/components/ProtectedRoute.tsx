@@ -6,9 +6,10 @@ import { isUserPro } from '../lib/supabase';
 interface ProtectedRouteProps {
   children: ReactNode;
   requirePro?: boolean;
+  requireAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, requirePro = false }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requirePro = false, requireAdmin = false }: ProtectedRouteProps) {
   const { session, profile, loading } = useAuth();
 
   if (loading) return (
@@ -24,6 +25,7 @@ export function ProtectedRoute({ children, requirePro = false }: ProtectedRouteP
     </div>
   );
   if (!profile.onboarding_complete) return <Navigate to="/onboarding" replace />;
+  if (requireAdmin && profile.role !== 'admin') return <Navigate to="/home" replace />;
   if (requirePro && !isUserPro(profile)) return <Navigate to="/upgrade" replace />;
   return <>{children}</>;
 }
