@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@paystack/inline-js": "^2.22.9",
+    "@sentry/react": "^10.56.0",
     "@stripe/stripe-js": "^9.7.0",
     "@supabase/supabase-js": "^2.105.1",
     "react": "^19.2.5",
