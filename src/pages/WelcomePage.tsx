@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase, getProfile } from '../lib/supabase';
 import { getGreeting } from '../lib/greeting';
 import { useStudy } from '../context/StudyContext';
+import { useAuth } from '../context/AuthContext';
 import BottomSheet from '../components/BottomSheet';
 import SideDrawer from '../components/SideDrawer';
 import { compressImage } from '../lib/api';
@@ -20,7 +21,7 @@ const MODES = [
 export default function WelcomePage() {
   const navigate = useNavigate();
   const { setTopic, setSelectedMode, setUploadedFile } = useStudy();
-  const [firstName, setFirstName] = useState<string>('');
+  const { profile, refreshProfile } = useAuth();
   const [selectedMode, setSelectedModeLocal] = useState<string | null>(null);
   const [topic, setTopicLocal] = useState<string>('');
   const [uploadedFile, setUploadedFileLocal] = useState<File | null>(null);
@@ -36,30 +37,41 @@ export default function WelcomePage() {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const firstName = profile?.first_name || 'there';
+
   useEffect(() => {
-    const loadProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profileData } = await getProfile(user.id);
-        setFirstName(profileData?.first_name || 'there');
-        if (profileData && !profileData.is_pro && profileData.daily_count >= 3) {
-          setShowLimitMessage(true);
-          analytics.dailyLimitHit();
-        }
-      }
-    };
-    loadProfile();
-  }, []);
+    if (profile && !profile.is_pro && profile.daily_count >= 3) {
+      setShowLimitMessage(true);
+      analytics.dailyLimitHit();
+    } else {
+      setShowLimitMessage(false);
+    }
+  }, [profile]);
 
   // Check for upgraded subscription success URL parameter
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('upgraded') === 'true') {
-      analytics.paymentCompleted('stripe', 'pro');
+      analytics.paymentCompleted('paystack', 'pro');
       setToastMessage('◆ Welcome to Pro. No more limits.');
       window.history.replaceState({}, '', '/home');
+
+      // Poll profile refresh from Supabase to ensure is_pro state propagates
+      let attempts = 0;
+      const interval = setInterval(async () => {
+        attempts++;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: latestProfile } = await getProfile(user.id);
+          if (latestProfile?.is_pro || attempts >= 8) {
+            clearInterval(interval);
+            await refreshProfile();
+          }
+        }
+      }, 1500);
+      return () => clearInterval(interval);
     }
-  }, []);
+  }, [refreshProfile]);
 
   // Toast automatic dismiss effect
   useEffect(() => {

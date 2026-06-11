@@ -76,12 +76,14 @@ async function detectGeo(): Promise<Geo> {
 
 import { initiatePaystackPayment, initiateStripeCheckout } from '../lib/payments';
 import { analytics } from '../lib/analytics';
+import { useAuth } from '../context/AuthContext';
 
 /* ══════════════════════════════════════════════════════════
    UpgradePage Component
    ══════════════════════════════════════════════════════════ */
 export default function UpgradePage() {
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
   const [geo, setGeo] = useState<Geo>('INT');
   const [selectedPlan, setSelectedPlan] = useState<string>('annual_int');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -127,6 +129,8 @@ export default function UpgradePage() {
       if (geo === 'NG') {
         await initiatePaystackPayment({ email, plan: planCode, userId });
         showToast('Payment processing... your Pro access will activate shortly.');
+        await refreshProfile();
+        navigate('/home?upgraded=true');
       } else {
         await initiateStripeCheckout({ email, plan: planCode, userId });
       }
