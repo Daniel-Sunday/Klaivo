@@ -1,22 +1,52 @@
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
-export default async function handler(req: Request) {
+// Disable Vercel's default body parsing to get the raw body for signature verification
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+export default async function handler(req: any, res?: any) {
   console.log('[Paystack Webhook] Request received');
 
   try {
-    const signature = req.headers.get('x-paystack-signature');
-    const body = await req.text();
+    let signature = '';
+    let body = '';
+
+    // Detect environment (Web Standard Request in local Vite vs Vercel Serverless req/res in production)
+    const isWebReq = typeof req.headers?.get === 'function';
+
+    if (isWebReq) {
+      signature = req.headers.get('x-paystack-signature') || '';
+      body = await req.text();
+    } else {
+      signature = (req.headers['x-paystack-signature'] as string) || '';
+      
+      // Read raw stream body
+      const buffers = [];
+      for await (const chunk of req) {
+        buffers.push(chunk);
+      }
+      body = Buffer.concat(buffers).toString('utf8');
+    }
+
     console.log('[Paystack Webhook] x-paystack-signature header:', signature);
 
     const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
     console.log('[Paystack Webhook] PAYSTACK_SECRET_KEY is present:', !!paystackSecretKey);
 
-    const crypto = await import('crypto');
     const hash = crypto.createHmac('sha512', paystackSecretKey || '').update(body).digest('hex');
     
-    if (hash !== signature) {
+    if (hash.toLowerCase() !== signature?.toLowerCase()) {
       console.error('[Paystack Webhook] Signature mismatch! Computed:', hash, 'Header:', signature);
-      return new Response('Invalid signature', { status: 400 });
+      if (isWebReq) {
+        return new Response('Invalid signature', { status: 400 });
+      } else {
+        res.status(400).send('Invalid signature');
+        return;
+      }
     }
     console.log('[Paystack Webhook] Signature verified successfully');
 
@@ -28,7 +58,12 @@ export default async function handler(req: Request) {
 
     if (event.event !== 'charge.success') {
       console.log('[Paystack Webhook] Ignoring non charge.success event:', event.event);
-      return new Response('OK', { status: 200 });
+      if (isWebReq) {
+        return new Response('OK', { status: 200 });
+      } else {
+        res.status(200).send('OK');
+        return;
+      }
     }
 
     let metadata = event.data?.metadata;
@@ -114,19 +149,33 @@ export default async function handler(req: Request) {
     }
 
     console.log('[Paystack Webhook] Flow completed successfully for user_id:', targetUserId);
-    return new Response('OK', { status: 200 });
+    
+    if (isWebReq) {
+      return new Response('OK', { status: 200 });
+    } else {
+      res.status(200).send('OK');
+      return;
+    }
 
   } catch (err: any) {
     console.error('[Paystack Webhook] Failure point logged:', err.message);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    if (res && typeof res.status === 'function') {
+      res.status(500).json({ error: err.message });
+    } else {
+      return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    }
   }
 }
 
 function getExpiryDate(plan: string) {
   const now = new Date();
   if (plan === 'trial')     now.setDate(now.getDate() + 7);
-  if (plan === 'monthly')   now.setMonth(now.getMonth() + 1);
-  if (plan === 'quarterly') now.setMonth(now.getMonth() + 3);
-  if (plan === 'annual')    now.setFullYear(now.getFullYear() + 1);
+  else if (plan === 'monthly')   now.setMonth(now.getMonth() + 1);
+  else if (plan === 'quarterly') now.setMonth(now.getMonth() + 3);
+  else if (plan === 'annual')    now.setFullYear(now.getFullYear() + 1);
+  else {
+    // Default fallback to 1 month instead of expiring instantly if plan is missing/unrecognized
+    now.setMonth(now.getMonth() + 1);
+  }
   return now.toISOString();
 }
