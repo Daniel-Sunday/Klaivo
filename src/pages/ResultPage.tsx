@@ -142,23 +142,15 @@ export default function ResultPage() {
       const existingFullAnswer = (session.result_json && session.result_json[heroKey]) || '';
       const modeSchema = getModeSchema(session.mode);
 
-      // Sanitize existingFullAnswer before sending: remove or escape any unescaped quotes, newlines, or control characters
-      const sanitizedAnswer = existingFullAnswer
-        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
-        .replace(/(?<!\\)"/g, '\\"')
-        .replace(/(?<!\\)\n/g, '\\n')
-        .replace(/(?<!\\)\r/g, '\\r');
-
-      // Wrap the value like this before including it: const safeAnswer = JSON.stringify(existingFullAnswer) and pass the parsed value cleanly inside the body object
-      const safeAnswer = JSON.stringify(sanitizedAnswer);
-      const parsedAnswer = JSON.parse(safeAnswer) as string;
+      // Remove control characters only; native JSON.stringify in callAPI handles escaping natively
+      const sanitizedAnswer = existingFullAnswer.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '');
 
       const response = await refineAnswer({
         type,
         topic: session.topic,
         mode: session.mode,
         level: session.level,
-        existingFullAnswer: parsedAnswer,
+        existingFullAnswer: sanitizedAnswer,
         modeSchema
       });
 
@@ -191,13 +183,16 @@ export default function ResultPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const { answer } = await generateFollowUp({
+      const res = await generateFollowUp({
         question,
         sessionId: sessionId!,
         originalFullAnswer: result[heroKey] || '',
         originalTopic: session.topic,
         conversationHistory: followUps.map(f => ({ question: f.question, answer: f.answer }))
       });
+
+      const answer = res.answer || res.result;
+      if (!answer) throw new Error('No answer returned from follow up generator');
 
       const { error: insertError } = await supabase.from('follow_ups').insert({
         session_id: sessionId,
