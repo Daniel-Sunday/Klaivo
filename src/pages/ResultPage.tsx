@@ -6,6 +6,8 @@ import { refineAnswer, generateFollowUp, stripMarkdownForCopy } from '../lib/api
 import { getModeSchema } from '../lib/promptBuilder';
 import { Session, FollowUp } from '../types';
 import { analytics } from '../lib/analytics';
+import { InstallBanner } from '../components/InstallBanner';
+import { showInstallPrompt, getDeferredInstallPrompt, clearDeferredInstallPrompt } from '../App';
 
 interface CollapsibleItem {
   question: string;
@@ -63,6 +65,30 @@ export default function ResultPage() {
   const [loading, setLoading] = useState(true);
   const [refining, setRefining] = useState<string | null>(null);
 
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+  const handleInstall = async () => {
+    const promptEvent = getDeferredInstallPrompt();
+    if (promptEvent) {
+      promptEvent.prompt();
+      try {
+        const { outcome } = await promptEvent.userChoice;
+        if (outcome === 'accepted') {
+          analytics.installPromptAccepted();
+        }
+      } catch (err) {
+        console.warn('Install prompt error:', err);
+      }
+      clearDeferredInstallPrompt();
+    }
+    setShowInstallBanner(false);
+  };
+
+  const handleDismissInstall = () => {
+    localStorage.setItem('klaivo_install_shown', 'true');
+    setShowInstallBanner(false);
+  };
+
   // Follow-up state
   const [followUpText, setFollowUpText] = useState('');
   const [followUpLoading, setFollowUpLoading] = useState(false);
@@ -88,6 +114,9 @@ export default function ResultPage() {
         const { data: fu } = await supabase.from('follow_ups').select('*').eq('session_id', sessionId).order('created_at', { ascending: true });
         setSession(s);
         setFollowUps(fu || []);
+        if (s && showInstallPrompt()) {
+          setShowInstallBanner(true);
+        }
       } catch (err) {
         console.error('Failed to load session:', err);
       } finally {
@@ -274,7 +303,10 @@ export default function ResultPage() {
   if (loading) {
     return (
       <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif]">
-        <header className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50">
+        <header
+          className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50"
+          style={{ paddingTop: 'calc(12px + var(--sat))' }}
+        >
           <div className="max-w-3xl mx-auto flex items-center justify-between">
             <div className="w-24 h-5 bg-white/5 rounded animate-pulse" />
             <div className="w-8 h-8 bg-white/5 rounded-full animate-pulse" />
@@ -308,7 +340,10 @@ export default function ResultPage() {
   return (
     <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white">
       {/* Dynamic Header */}
-      <header className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50 pt-safe-top">
+      <header
+        className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50"
+        style={{ paddingTop: 'calc(12px + var(--sat))' }}
+      >
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
@@ -652,6 +687,14 @@ export default function ResultPage() {
           <span className="material-symbols-outlined text-accent text-[20px]">info</span>
           <span>{toastMessage}</span>
         </div>
+      )}
+
+      {/* PWA Install Banner Nudge */}
+      {showInstallBanner && (
+        <InstallBanner
+          onInstall={handleInstall}
+          onDismiss={handleDismissInstall}
+        />
       )}
     </div>
   );

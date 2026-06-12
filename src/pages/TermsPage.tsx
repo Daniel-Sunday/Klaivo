@@ -8,12 +8,12 @@ export default function TermsPage() {
       className="min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white"
       style={{ background: 'var(--bg-primary)', color: 'var(--text-body)' }}
     >
-      {/* Top Bar */}
       <header
         className="border-b px-6 py-4 fixed top-0 w-full z-50 backdrop-blur-xl"
         style={{
           borderColor: 'var(--border-subtle)',
           background: 'color-mix(in srgb, var(--bg-primary) 80%, transparent)',
+          paddingTop: 'calc(12px + var(--sat))',
         }}
       >
         <div className="max-w-2xl mx-auto flex items-center justify-center relative">

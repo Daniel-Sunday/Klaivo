@@ -179,7 +179,10 @@ export default function WelcomePage() {
   return (
     <div className="bg-bg-primary text-text-body font-['Inter',sans-serif] antialiased min-h-screen flex flex-col selection:bg-accent selection:text-white">
       {/* Top Navigation */}
-      <header className="fixed top-0 w-full z-50 bg-bg-primary/60 backdrop-blur-xl border-b border-border-subtle shadow-none pt-safe-top">
+      <header
+        className="fixed top-0 w-full z-50 bg-bg-primary/60 backdrop-blur-xl border-b border-border-subtle shadow-none"
+        style={{ paddingTop: 'calc(12px + var(--sat))' }}
+      >
         <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
           {/* Left-aligned Hamburger and K Logo */}
           <div className="flex items-center gap-4">
@@ -239,7 +242,10 @@ export default function WelcomePage() {
         </div>
 
         {/* AI Input Area at Bottom - Sticky */}
-        <div className="w-full mt-8 relative sticky bottom-0 pb-safe-bottom">
+        <div 
+          className="w-full mt-8 relative sticky bottom-0"
+          style={{ paddingBottom: 'calc(16px + var(--sab))' }}
+        >
           <div 
             className="bg-surface-low rounded-2xl transition-all duration-300 overflow-hidden flex flex-col relative focus-within:border-accent focus-within:shadow-[0_0_0_4px_var(--accent-glow)] focus-within:transform focus-within:-translate-y-2"
             style={{ border: '1px solid var(--ghost-border)' }}

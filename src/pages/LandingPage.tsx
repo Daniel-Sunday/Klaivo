@@ -117,7 +117,10 @@ export default function LandingPage() {
 
   return (
     <div className="bg-surface-dim text-on-surface font-body antialiased selection:bg-primary selection:text-on-primary">
-      <header className="fixed top-0 w-full z-50 bg-bg-primary/80 backdrop-blur-xl transition-all duration-300 pt-safe-top">
+      <header
+        className="fixed top-0 w-full z-50 bg-bg-primary/80 backdrop-blur-xl transition-all duration-300"
+        style={{ paddingTop: 'calc(12px + var(--sat))' }}
+      >
         <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
             <span className="text-xl font-bold tracking-tighter text-text-primary font-headline">

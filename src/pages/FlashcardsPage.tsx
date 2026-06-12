@@ -114,7 +114,10 @@ export default function FlashcardsPage() {
   if (!isPro) {
     return (
       <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif]">
-        <header className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50 pt-safe-top">
+        <header
+          className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50"
+          style={{ paddingTop: 'calc(12px + var(--sat))' }}
+        >
           <div className="max-w-md mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button 
@@ -180,7 +183,10 @@ export default function FlashcardsPage() {
   if (isCompleted) {
     return (
       <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white">
-        <header className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50 pt-safe-top">
+        <header
+          className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50"
+          style={{ paddingTop: 'calc(12px + var(--sat))' }}
+        >
           <div className="max-w-md mx-auto flex items-center justify-between">
             <span className="text-xs font-bold text-text-secondary font-['Manrope',sans-serif]">Deck Finished</span>
             <span className="text-xs font-bold text-accent font-['Manrope',sans-serif]">{totalCards} / {totalCards}</span>
@@ -268,7 +274,10 @@ export default function FlashcardsPage() {
   return (
     <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white">
       {/* Top Header */}
-      <header className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50 pt-safe-top">
+      <header
+        className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50"
+        style={{ paddingTop: 'calc(12px + var(--sat))' }}
+      >
         <div className="max-w-md mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 

@@ -1,8 +1,28 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { StudyProvider } from './context/StudyContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { analytics } from './lib/analytics';
+
+let deferredInstallPrompt: any = null;
+
+export function getDeferredInstallPrompt() {
+  return deferredInstallPrompt;
+}
+
+export function clearDeferredInstallPrompt() {
+  deferredInstallPrompt = null;
+}
+
+export function showInstallPrompt() {
+  if (!deferredInstallPrompt) return false;
+  const alreadyShown = localStorage.getItem('klaivo_install_shown');
+  if (alreadyShown) return false;
+
+  analytics.installPromptShown();
+  return true;
+}
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
@@ -28,6 +48,15 @@ function SplashLoader() {
 }
 
 export default function App() {
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
   return (
     <AuthProvider>
       <StudyProvider>
