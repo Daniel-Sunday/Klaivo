@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { StudyProvider } from './context/StudyContext';
 import { AuthProvider } from './context/AuthContext';
@@ -48,6 +48,9 @@ function SplashLoader() {
 }
 
 export default function App() {
+  const [showOfflineToast, setShowOfflineToast] = useState(false);
+  const [toastType, setToastType] = useState<'offline' | 'online' | null>(null);
+
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -55,6 +58,35 @@ export default function App() {
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setToastType('online');
+      setShowOfflineToast(true);
+      const timer = setTimeout(() => {
+        setShowOfflineToast(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    };
+
+    const handleOffline = () => {
+      setToastType('offline');
+      setShowOfflineToast(true);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    if (!navigator.onLine) {
+      setToastType('offline');
+      setShowOfflineToast(true);
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   return (
@@ -80,6 +112,45 @@ export default function App() {
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>} />
             </Routes>
           </Suspense>
+
+          {/* Global Offline/Online Toast */}
+          {showOfflineToast && (
+            <div 
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2.5 px-5 py-3.5 rounded-xl shadow-2xl transition-all duration-300 font-medium text-sm backdrop-blur-md"
+              style={{
+                background: 'var(--surface-low)',
+                color: 'var(--text-primary)',
+                border: `1px solid ${toastType === 'offline' ? 'var(--danger)' : 'var(--success)'}`,
+                boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+              }}
+            >
+              <span 
+                className="material-symbols-outlined text-[20px] select-none"
+                style={{ color: toastType === 'offline' ? 'var(--danger)' : 'var(--success)' }}
+              >
+                {toastType === 'offline' ? 'wifi_off' : 'wifi'}
+              </span>
+              <span>
+                {toastType === 'offline' ? (
+                  <>
+                    You're offline. Your last sessions are still saved.<br />
+                    Connect and come back to keep studying.
+                  </>
+                ) : (
+                  "Back online! Connection restored."
+                )}
+              </span>
+              {toastType === 'offline' && (
+                <button 
+                  onClick={() => setShowOfflineToast(false)}
+                  className="ml-2 text-text-secondary hover:text-text-primary text-xs bg-transparent border-none cursor-pointer p-0.5 flex items-center justify-center rounded-full hover:bg-white/5"
+                  aria-label="Dismiss offline notification"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              )}
+            </div>
+          )}
         </BrowserRouter>
       </StudyProvider>
     </AuthProvider>
