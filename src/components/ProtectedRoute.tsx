@@ -14,14 +14,14 @@ export function ProtectedRoute({ children, requirePro = false, requireAdmin = fa
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-      <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" />
+      <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" loading="lazy" />
     </div>
   );
 
   if (!session) return <Navigate to="/" replace />;
   if (profile === null) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-      <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" />
+      <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" loading="lazy" />
     </div>
   );
   if (!profile.onboarding_complete) return <Navigate to="/onboarding" replace />;

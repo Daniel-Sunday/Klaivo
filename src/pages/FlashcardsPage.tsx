@@ -105,7 +105,7 @@ export default function FlashcardsPage() {
   if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center text-text-body font-['Inter',sans-serif]">
-        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe mb-4" />
+        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe mb-4" loading="lazy" />
         <p className="text-xs text-text-secondary tracking-wide">Loading study session...</p>
       </div>
     );
@@ -150,7 +150,7 @@ export default function FlashcardsPage() {
       <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center text-text-body font-['Inter',sans-serif]">
         <div className="relative mb-6">
           <div className="absolute inset-0 rounded-full w-24 h-24 blur-[20px] glow-breathe" style={{ background: 'var(--accent-glow)' }} />
-          <img src="/logo.svg" alt="Klaivo" className="relative w-16 h-16 k-breathe" />
+          <img src="/logo.svg" alt="Klaivo" className="relative w-16 h-16 k-breathe" loading="lazy" />
         </div>
         <h3 className="text-lg font-['Manrope',sans-serif] font-bold text-text-primary mb-1">Creating your study deck</h3>
         <p className="text-xs text-text-secondary tracking-wide">Distilling core points into flashcards...</p>

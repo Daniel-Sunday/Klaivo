@@ -530,7 +530,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="relative mb-8">
               <div className="absolute inset-0 bg-[rgba(79,142,247,0.08)] rounded-full w-24 h-24 blur-[20px] glow-breathe" />
-              <img src="/logo.svg" alt="Klaivo" className="relative w-12 h-12 k-breathe" />
+              <img src="/logo.svg" alt="Klaivo" className="relative w-12 h-12 k-breathe" loading="lazy" />
             </div>
             <h3 className="text-lg font-headline font-bold text-text-primary mb-2">Generating study resources</h3>
             <p className="text-text-body font-body text-sm max-w-xs transition-all duration-300 min-h-[40px]">{currentMessage}</p>

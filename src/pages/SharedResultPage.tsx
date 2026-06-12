@@ -104,7 +104,7 @@ export default function SharedResultPage() {
     return (
       <div className="bg-bg-primary text-text-body min-h-screen flex flex-col justify-center items-center font-['Inter',sans-serif] px-6">
         <div className="flex flex-col items-center gap-1.5 mb-8">
-          <img src="/logo.svg" alt="Klaivo" className="w-12 h-12" />
+          <img src="/logo.svg" alt="Klaivo" className="w-12 h-12" loading="lazy" />
           <span className="font-['Manrope'] font-bold text-text-primary text-sm tracking-tight">klaivo.app</span>
         </div>
         <div className="bg-surface-low border border-ghost-border rounded-2xl p-8 max-w-sm w-full text-center space-y-4">
@@ -138,6 +138,7 @@ export default function SharedResultPage() {
             src="/logo.svg" 
             alt="Klaivo" 
             className="w-10 h-10 group-hover:scale-105 transition-transform duration-300" 
+            loading="lazy"
           />
           <span className="font-['Manrope'] font-bold text-text-primary text-sm tracking-tight group-hover:text-accent transition-colors">
             klaivo.app

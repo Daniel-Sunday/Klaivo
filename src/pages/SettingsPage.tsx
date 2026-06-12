@@ -106,7 +106,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center text-text-body font-['Inter',sans-serif]">
-        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe mb-4" />
+        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe mb-4" loading="lazy" />
         <p className="text-xs text-text-secondary tracking-wide">Loading settings...</p>
       </div>
     );

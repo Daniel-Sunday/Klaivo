@@ -129,7 +129,7 @@ export default function AdminPage() {
   if (loading) {
     return (
       <div className="bg-bg-primary text-text-body min-h-screen flex items-center justify-center font-['Inter',sans-serif]">
-        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" />
+        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" loading="lazy" />
       </div>
     );
   }
@@ -343,6 +343,7 @@ export default function AdminPage() {
                       src={item.uploaded_file_url}
                       alt="Thumbnail preview"
                       className="w-14 h-14 object-cover rounded-lg border border-ghost-border group-hover:opacity-85 transition-opacity"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-lg">
                       <span className="material-symbols-outlined text-white text-base">open_in_new</span>

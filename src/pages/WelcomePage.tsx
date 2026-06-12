@@ -214,7 +214,7 @@ export default function WelcomePage() {
           {/* Greeting - Bold and Heavy */}
           <div className="mb-8 w-full text-center">
             <h1 className="font-['Manrope',sans-serif] font-bold text-3xl md:text-4xl tracking-tight leading-tight mb-2 text-text-primary">
-              {greeting.main}{firstName}<br/>
+              {greeting.main}<br/>
               <span className="text-text-secondary font-medium text-2xl md:text-3xl">{greeting.sub}</span>
             </h1>
           </div>
@@ -248,7 +248,7 @@ export default function WelcomePage() {
             {uploadedFile && (
               <div className="mx-5 mt-4 inline-flex items-center gap-2.5 bg-surface-mid border border-ghost-border rounded-xl px-3 py-1.5 self-start shadow-sm">
                 {previewUrl ? (
-                  <img src={previewUrl} alt="Preview" className="w-6 h-6 object-cover rounded-md border border-white/10" />
+                  <img src={previewUrl} alt="Preview" className="w-6 h-6 object-cover rounded-md border border-white/10" loading="lazy" />
                 ) : (
                   <span className="material-symbols-outlined text-sm text-accent">image</span>
                 )}
