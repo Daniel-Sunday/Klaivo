@@ -233,6 +233,15 @@ export default function LandingPage() {
                 {authMessage}
               </p>
             )}
+            <div className="text-center pt-1">
+              <Link
+                to="/forgot-password"
+                className="text-xs hover:underline transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Forgot password?
+              </Link>
+            </div>
             <p className="text-xs text-text-secondary pt-4 leading-relaxed">
               By continuing, you agree to Klaivo&apos;s{' '}
               <Link className="underline hover:text-text-body transition-colors" to="/terms">

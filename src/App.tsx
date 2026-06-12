@@ -38,6 +38,8 @@ const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const SharedResultPage = lazy(() => import('./pages/SharedResultPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
 function SplashLoader() {
   return (
@@ -108,6 +110,8 @@ export default function App() {
               <Route path="/upgrade" element={<UpgradePage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/s/:sessionId" element={<SharedResultPage />} />
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>} />
             </Routes>
