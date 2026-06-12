@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { supabase, getProfile } from '../lib/supabase';
 import { getGreeting } from '../lib/greeting';
 import { useStudy } from '../context/StudyContext';
+import { useAuth } from '../context/AuthContext';
 import BottomSheet from '../components/BottomSheet';
 import SideDrawer from '../components/SideDrawer';
 import { compressImage } from '../lib/api';
+import { analytics } from '../lib/analytics';
 
 const MODES = [
   { id: 'understand', label: 'Understand', icon: 'psychology' },
@@ -19,12 +21,12 @@ const MODES = [
 export default function WelcomePage() {
   const navigate = useNavigate();
   const { setTopic, setSelectedMode, setUploadedFile } = useStudy();
-  const [firstName, setFirstName] = useState<string>('');
+  const { profile, refreshProfile } = useAuth();
   const [selectedMode, setSelectedModeLocal] = useState<string | null>(null);
   const [topic, setTopicLocal] = useState<string>('');
   const [uploadedFile, setUploadedFileLocal] = useState<File | null>(null);
   const [showBottomSheet, setShowBottomSheet] = useState<boolean>(false);
-  const [showLimitMessage] = useState<boolean>(false);
+  const [showLimitMessage, setShowLimitMessage] = useState<boolean>(false);
   const [showSideDrawer, setShowSideDrawer] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,25 +37,41 @@ export default function WelcomePage() {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const firstName = profile?.first_name || 'there';
+
   useEffect(() => {
-    const loadProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profileData } = await getProfile(user.id);
-        setFirstName(profileData?.first_name || 'there');
-      }
-    };
-    loadProfile();
-  }, []);
+    if (profile && !profile.is_pro && profile.daily_count >= 3) {
+      setShowLimitMessage(true);
+      analytics.dailyLimitHit();
+    } else {
+      setShowLimitMessage(false);
+    }
+  }, [profile]);
 
   // Check for upgraded subscription success URL parameter
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('upgraded') === 'true') {
+      analytics.paymentCompleted('paystack', 'pro');
       setToastMessage('◆ Welcome to Pro. No more limits.');
       window.history.replaceState({}, '', '/home');
+
+      // Poll profile refresh from Supabase to ensure is_pro state propagates
+      let attempts = 0;
+      const interval = setInterval(async () => {
+        attempts++;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: latestProfile } = await getProfile(user.id);
+          if (latestProfile?.is_pro || attempts >= 8) {
+            clearInterval(interval);
+            await refreshProfile();
+          }
+        }
+      }, 1500);
+      return () => clearInterval(interval);
     }
-  }, []);
+  }, [refreshProfile]);
 
   // Toast automatic dismiss effect
   useEffect(() => {
@@ -112,6 +130,7 @@ export default function WelcomePage() {
 
     setUploadedFileLocal(file);
     setUploadedFile(file);
+    analytics.imageUploaded();
 
     // Read as base64 and compress for API call
     console.log("Starting image compression...");
@@ -190,12 +209,12 @@ export default function WelcomePage() {
       </header>
 
       {/* Main Content Canvas */}
-      <main className="flex-grow flex flex-col px-6 pt-28 pb-8 max-w-2xl mx-auto w-full">
+      <main id="main-content" className="flex-grow flex flex-col px-6 pt-28 pb-8 max-w-2xl mx-auto w-full">
         <div className="my-auto flex flex-col items-center w-full">
           {/* Greeting - Bold and Heavy */}
           <div className="mb-8 w-full text-center">
             <h1 className="font-['Manrope',sans-serif] font-bold text-3xl md:text-4xl tracking-tight leading-tight mb-2 text-text-primary">
-              {greeting.main}{firstName}<br/>
+              {greeting.main}<br/>
               <span className="text-text-secondary font-medium text-2xl md:text-3xl">{greeting.sub}</span>
             </h1>
           </div>
@@ -229,7 +248,7 @@ export default function WelcomePage() {
             {uploadedFile && (
               <div className="mx-5 mt-4 inline-flex items-center gap-2.5 bg-surface-mid border border-ghost-border rounded-xl px-3 py-1.5 self-start shadow-sm">
                 {previewUrl ? (
-                  <img src={previewUrl} alt="Preview" className="w-6 h-6 object-cover rounded-md border border-white/10" />
+                  <img src={previewUrl} alt="Preview" className="w-6 h-6 object-cover rounded-md border border-white/10" loading="lazy" />
                 ) : (
                   <span className="material-symbols-outlined text-sm text-accent">image</span>
                 )}
@@ -276,6 +295,7 @@ export default function WelcomePage() {
               {/* Blue Circular Arrow Send Button */}
               <button
                 onClick={handleSend}
+                aria-label="Send study prompt"
                 disabled={topic.length < 10 || isUploading}
                 style={{
                   boxShadow: '0 4px 14px var(--accent-glow)'

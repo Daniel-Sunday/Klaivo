@@ -106,7 +106,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center text-text-body font-['Inter',sans-serif]">
-        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe mb-4" />
+        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe mb-4" loading="lazy" />
         <p className="text-xs text-text-secondary tracking-wide">Loading settings...</p>
       </div>
     );
@@ -133,7 +133,7 @@ export default function SettingsPage() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-grow max-w-xl mx-auto w-full px-6 pt-24 pb-12">
+      <main id="main-content" className="flex-grow max-w-xl mx-auto w-full px-6 pt-24 pb-12">
         {/* Account Section */}
         <h2 className="text-[11px] text-text-secondary font-bold uppercase tracking-wider font-['Manrope',sans-serif] mb-3">
           Account
@@ -147,16 +147,16 @@ export default function SettingsPage() {
             <span className="text-text-secondary">First Name</span>
             <span className="text-text-body font-medium">{profile?.first_name || 'N/A'}</span>
           </div>
-          <div 
+          <button 
             onClick={() => setIsLevelSheetOpen(true)}
-            className="flex items-center justify-between text-sm cursor-pointer group hover:opacity-80 transition-opacity"
+            className="w-full text-left bg-transparent border-none flex items-center justify-between text-sm cursor-pointer group hover:opacity-80 transition-opacity p-0"
           >
             <span className="text-text-secondary">Academic Level</span>
             <div className="flex items-center gap-1.5">
               <span className="text-accent font-semibold">{profile?.academic_level || 'Set level'}</span>
               <span className="material-symbols-outlined text-text-secondary text-[18px] group-hover:text-text-primary transition-colors">chevron_right</span>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Notifications Section */}
@@ -181,7 +181,7 @@ export default function SettingsPage() {
         </h2>
         <div className="bg-bg-secondary border border-ghost-border rounded-2xl p-5 mb-6 space-y-4">
           <span className="text-xs text-text-secondary block">App Theme</span>
-          <div className="flex gap-2">
+          <div role="list" className="flex gap-2">
             {([
               { id: 'light', label: 'Light', icon: 'light_mode' },
               { id: 'dark', label: 'Dark', icon: 'dark_mode' },
@@ -191,6 +191,7 @@ export default function SettingsPage() {
               return (
                 <button
                   key={t.id}
+                  role="listitem"
                   onClick={() => setTheme(t.id)}
                   style={{
                     borderColor: isActive ? 'var(--accent)' : 'var(--ghost-border)',
@@ -211,21 +212,23 @@ export default function SettingsPage() {
         <h2 className="text-[11px] text-text-secondary font-bold uppercase tracking-wider font-['Manrope',sans-serif] mb-3">
           Legal
         </h2>
-        <div className="bg-bg-secondary border border-ghost-border rounded-2xl p-5 mb-6 space-y-4">
-          <div 
+        <div role="list" className="bg-bg-secondary border border-ghost-border rounded-2xl p-5 mb-6 space-y-4">
+          <button 
             onClick={() => navigate('/privacy')}
-            className="flex items-center justify-between text-sm cursor-pointer group hover:opacity-80 transition-opacity pb-3 border-b border-border-subtle"
+            role="listitem"
+            className="w-full text-left bg-transparent border-none flex items-center justify-between text-sm cursor-pointer group hover:opacity-80 transition-opacity pb-3 border-b border-border-subtle p-0"
           >
             <span className="text-text-body">Privacy Policy</span>
             <span className="material-symbols-outlined text-text-secondary text-[18px]">chevron_right</span>
-          </div>
-          <div 
+          </button>
+          <button 
             onClick={() => navigate('/terms')}
-            className="flex items-center justify-between text-sm cursor-pointer group hover:opacity-80 transition-opacity"
+            role="listitem"
+            className="w-full text-left bg-transparent border-none flex items-center justify-between text-sm cursor-pointer group hover:opacity-80 transition-opacity p-0"
           >
             <span className="text-text-body">Terms of Service</span>
             <span className="material-symbols-outlined text-text-secondary text-[18px]">chevron_right</span>
-          </div>
+          </button>
         </div>
 
         {/* Danger Zone */}

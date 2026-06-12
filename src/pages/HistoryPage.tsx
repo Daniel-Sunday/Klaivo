@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { analytics } from '../lib/analytics';
 
 interface Session {
   id: string;
@@ -73,8 +74,9 @@ export default function HistoryPage() {
 
   const loadTimeoutRef = useRef<any>(null);
 
-  // Clean up timeout on unmount
+  // Clean up timeout on unmount and track page view
   useEffect(() => {
+    analytics.historyViewed();
     return () => {
       if (loadTimeoutRef.current) {
         clearTimeout(loadTimeoutRef.current);
@@ -209,7 +211,7 @@ export default function HistoryPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow max-w-xl mx-auto w-full px-6 pt-24 pb-12 flex flex-col">
+      <main id="main-content" className="flex-grow max-w-xl mx-auto w-full px-6 pt-24 pb-12 flex flex-col">
         {/* Search Bar Container */}
         <div className="relative mb-6 flex items-center">
           <span className="material-symbols-outlined text-text-secondary absolute left-3.5 select-none pointer-events-none text-[20px]">search</span>
@@ -245,10 +247,11 @@ export default function HistoryPage() {
                     </h3>
                     <div className="space-y-3">
                       {groupSessions.map((session) => (
-                        <div
+                        <button
                           key={session.id}
                           onClick={() => navigate(`/result/${session.id}`)}
-                          className="bg-bg-secondary border border-ghost-border hover:border-ghost-border hover:bg-surface-low transition-all rounded-2xl p-4 flex items-center justify-between cursor-pointer group"
+                          aria-label={`View session for ${session.topic}`}
+                          className="w-full text-left bg-bg-secondary border border-ghost-border hover:border-ghost-border hover:bg-surface-low transition-all rounded-2xl p-4 flex items-center justify-between cursor-pointer group"
                         >
                           <div className="space-y-1.5 pr-4 truncate flex-grow">
                             <h4 className="font-semibold text-text-primary text-sm font-body truncate">
@@ -278,7 +281,7 @@ export default function HistoryPage() {
                           <span className="material-symbols-outlined text-text-secondary group-hover:text-text-primary transition-colors shrink-0">
                             chevron_right
                           </span>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>

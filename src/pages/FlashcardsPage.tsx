@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase, isUserPro } from '../lib/supabase';
 import { generateFlashcards } from '../lib/api';
 import { buildFlashcardsPrompt } from '../lib/promptBuilder';
+import { useAuth } from '../context/AuthContext';
+import FreemiumGate from '../components/FreemiumGate';
+import { analytics } from '../lib/analytics';
 
 interface Flashcard {
   question: string;
@@ -12,6 +15,8 @@ interface Flashcard {
 export default function FlashcardsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
+  const { profile, loading: authLoading } = useAuth();
+  const isPro = isUserPro(profile);
 
   const [session, setSession] = useState<any>(null);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -24,6 +29,12 @@ export default function FlashcardsPage() {
 
   useEffect(() => {
     async function loadAndGenerate() {
+      if (authLoading) return;
+      if (!isPro) {
+        setLoading(false);
+        setGenerating(false);
+        return;
+      }
       try {
         const { data: s, error: loadErr } = await supabase
           .from('sessions')
@@ -69,7 +80,7 @@ export default function FlashcardsPage() {
     if (sessionId) {
       loadAndGenerate();
     }
-  }, [sessionId]);
+  }, [sessionId, authLoading, isPro]);
 
   const handleNext = () => {
     setIsFlipped(false);
@@ -91,11 +102,45 @@ export default function FlashcardsPage() {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center text-text-body font-['Inter',sans-serif]">
-        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe mb-4" />
+        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe mb-4" loading="lazy" />
         <p className="text-xs text-text-secondary tracking-wide">Loading study session...</p>
+      </div>
+    );
+  }
+
+  if (!isPro) {
+    return (
+      <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif]">
+        <header className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50 pt-safe-top">
+          <div className="max-w-md mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => navigate(`/result/${sessionId}`)}
+                className="text-text-secondary hover:text-text-primary p-1.5 hover:bg-surface-low rounded-full transition-colors flex items-center justify-center bg-transparent border-none cursor-pointer"
+                aria-label="Back to results"
+              >
+                <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+              </button>
+              <h1 className="font-['Manrope',sans-serif] text-sm font-bold text-text-primary tracking-tight">
+                Flashcards
+              </h1>
+            </div>
+          </div>
+        </header>
+        <main className="flex-grow flex items-center justify-center p-6">
+          <div className="max-w-xs w-full">
+            <FreemiumGate 
+              feature="Flashcards" 
+              onUpgrade={() => {
+                analytics.proFeatureTapped('flashcards');
+                navigate('/upgrade?from=flashcards');
+              }} 
+            />
+          </div>
+        </main>
       </div>
     );
   }
@@ -105,7 +150,7 @@ export default function FlashcardsPage() {
       <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center text-text-body font-['Inter',sans-serif]">
         <div className="relative mb-6">
           <div className="absolute inset-0 rounded-full w-24 h-24 blur-[20px] glow-breathe" style={{ background: 'var(--accent-glow)' }} />
-          <img src="/logo.svg" alt="Klaivo" className="relative w-16 h-16 k-breathe" />
+          <img src="/logo.svg" alt="Klaivo" className="relative w-16 h-16 k-breathe" loading="lazy" />
         </div>
         <h3 className="text-lg font-['Manrope',sans-serif] font-bold text-text-primary mb-1">Creating your study deck</h3>
         <p className="text-xs text-text-secondary tracking-wide">Distilling core points into flashcards...</p>
@@ -244,7 +289,7 @@ export default function FlashcardsPage() {
       </header>
 
       {/* Main Flashcard Container */}
-      <main className="flex-grow flex flex-col items-center justify-center p-6 pt-20 pb-8 max-w-md w-full mx-auto">
+      <main id="main-content" className="flex-grow flex flex-col items-center justify-center p-6 pt-20 pb-8 max-w-md w-full mx-auto">
         {/* Progress Bar */}
         <div className="w-full bg-white/5 h-1 rounded-full mb-8 overflow-hidden">
           <div 

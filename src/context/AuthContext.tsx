@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback, Re
 import { supabase, getProfile, upsertProfile } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import type { Subscription } from '@supabase/supabase-js';
+import { setAnalyticsUser } from '../lib/analytics';
+import * as Sentry from '@sentry/react';
 
 interface AuthContextType {
   session: Session | null;
@@ -60,6 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!mounted) return;
 
         if (event === 'SIGNED_IN' && newSession) {
+          setAnalyticsUser(newSession.user.id);
+          Sentry.setUser({ id: newSession.user.id });
           if (!initializedRef.current) {
             // First sign-in: show loading, upsert profile, then load it
             setLoading(true);
@@ -77,6 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await loadProfile(newSession.user.id);
           }
         } else if (event === 'INITIAL_SESSION' && newSession?.user) {
+          setAnalyticsUser(newSession.user.id);
+          Sentry.setUser({ id: newSession.user.id });
           // First load / page refresh — hydrate profile
           try {
             await loadProfile(newSession.user.id);
@@ -85,13 +91,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (mounted) setLoading(false);
           }
         } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
+          setAnalyticsUser(newSession.user.id);
+          Sentry.setUser({ id: newSession.user.id });
           // Tab re-focus / background refresh — session is already set above,
           // silently refresh profile without flashing a loading screen.
           await loadProfile(newSession.user.id);
         } else if (event === 'SIGNED_OUT' || !newSession) {
+          setAnalyticsUser(null);
+          Sentry.setUser(null);
           setProfile(null);
           setLoading(false);
         } else if (event === 'INITIAL_SESSION' && !newSession) {
+          setAnalyticsUser(null);
+          Sentry.setUser(null);
           // No existing session on first load
           setLoading(false);
         }

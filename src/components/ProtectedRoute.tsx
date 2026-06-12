@@ -6,24 +6,26 @@ import { isUserPro } from '../lib/supabase';
 interface ProtectedRouteProps {
   children: ReactNode;
   requirePro?: boolean;
+  requireAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, requirePro = false }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requirePro = false, requireAdmin = false }: ProtectedRouteProps) {
   const { session, profile, loading } = useAuth();
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-      <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" />
+      <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" loading="lazy" />
     </div>
   );
 
   if (!session) return <Navigate to="/" replace />;
   if (profile === null) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-      <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" />
+      <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" loading="lazy" />
     </div>
   );
   if (!profile.onboarding_complete) return <Navigate to="/onboarding" replace />;
+  if (requireAdmin && profile.role !== 'admin') return <Navigate to="/home" replace />;
   if (requirePro && !isUserPro(profile)) return <Navigate to="/upgrade" replace />;
   return <>{children}</>;
 }

@@ -127,6 +127,7 @@ export default async function handler(req: Request): Promise<Response> {
     });
 
   } catch (err: any) {
+    console.error('API Error in generate function:', err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { ...cors, 'Content-Type': 'application/json' }

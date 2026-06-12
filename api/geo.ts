@@ -10,6 +10,7 @@ export default async function handler(req: Request): Promise<Response> {
   const origin = req.headers.get('origin') || '';
   const allowedOrigins = [
     'https://klaivo.app',
+    'https://klaivo.vercel.app',
     'http://localhost:3000',
     'http://localhost:5173',
   ];

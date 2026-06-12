@@ -34,7 +34,7 @@
   <link rel="icon" type="image/png" href="/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/icons/icon-180.png" />
 
-  <!-- Safe area CSS variables -->
+  <!-- Safe area CSS variables & initial accessibility styles -->
   <style>
     :root {
       --sat: env(safe-area-inset-top, 0px);
@@ -42,9 +42,21 @@
       --sal: env(safe-area-inset-left, 0px);
       --sar: env(safe-area-inset-right, 0px);
     }
+    .skip-link {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <div id="root"></div>
   <script src="https://js.paystack.co/v1/inline.js" defer></script>
   <script type="module" src="/src/main.tsx"></script>

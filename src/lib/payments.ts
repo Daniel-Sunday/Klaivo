@@ -1,4 +1,5 @@
 import { getAuthToken } from './supabase';
+import { analytics } from './analytics';
 
 // ─────────────────────────────────────────
 // PLAN DEFINITIONS
@@ -32,6 +33,8 @@ export async function initiatePaystackPayment({ email, plan, userId }: PaystackO
   const planConfig = PLANS.NG[plan];
   if (!planConfig) throw new Error(`Invalid plan: ${plan}`);
 
+  analytics.paymentInitiated('paystack', plan);
+
   return new Promise((resolve, reject) => {
     const handler = (window as any).PaystackPop.setup({
       key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
@@ -39,7 +42,10 @@ export async function initiatePaystackPayment({ email, plan, userId }: PaystackO
       amount: planConfig.amount,
       currency: 'NGN',
       metadata: { user_id: userId, plan, provider: 'paystack' },
-      callback: (response: any) => resolve({ reference: response.reference, plan }),
+      callback: (response: any) => {
+        analytics.paymentCompleted('paystack', plan);
+        resolve({ reference: response.reference, plan });
+      },
       onClose: () => reject(new Error('PAYMENT_CANCELLED')),
     });
     handler.openIframe();
@@ -55,6 +61,9 @@ interface StripeOptions {
 export async function initiateStripeCheckout({ email, plan, userId }: StripeOptions): Promise<void> {
   const planConfig = PLANS.INT[plan];
   if (!planConfig) throw new Error(`Invalid plan: ${plan}`);
+  
+  analytics.paymentInitiated('stripe', plan);
+
   const token = await getAuthToken();
 
   const response = await fetch('/api/payments/create-checkout', {

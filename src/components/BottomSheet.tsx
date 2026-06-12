@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase, getProfile } from '../lib/supabase';
 import { generateAnswer, compressImage } from '../lib/api';
 import { buildStudyPrompt, analysePrompt } from '../lib/promptBuilder';
+import { analytics } from '../lib/analytics';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -220,6 +221,46 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
   const [profile, setProfile] = useState<any>(null);
   const [isReadingImageState, setIsReadingImageState] = useState(false);
   const imageBase64Ref = useRef<string | null>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'Tab') {
+        const focusable = sheetRef.current?.querySelectorAll<HTMLElement>(
+          'button, input, textarea, [tabindex]'
+        );
+        if (!focusable?.length) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        const firstFocusable = sheetRef.current?.querySelector<HTMLElement>(
+          'button, input, textarea'
+        );
+        firstFocusable?.focus();
+      }, 100);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (uploadedImageBase64) {
@@ -324,6 +365,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
   };
 
   const startGenerating = async (finalAnswers: Record<string, any>) => {
+    const startTime = Date.now();
     setSheetState('generating');
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -342,6 +384,8 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
         'Postgraduate': 'postgrad'
       };
       const mappedLevel = levelMap[finalLevel] || finalLevel || '100_200';
+
+      analytics.sessionStarted(mode, mappedLevel, !!uploadedFile);
 
       const finalDepth = finalAnswers.depth || detected.depth || 'solid';
 
@@ -430,6 +474,8 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
       }
 
       if (sessionRecord) {
+        const durationMs = Date.now() - startTime;
+        analytics.sessionCompleted(mode, mappedLevel, durationMs, topic);
         navigate(`/result/${sessionRecord.id}`);
         onClose();
       }
@@ -448,12 +494,18 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
       {/* Drawer Body */}
-      <div className="relative bg-surface w-full max-w-lg rounded-t-3xl p-6 pb-8 pb-safe-bottom border-t border-white/10 z-10 transition-transform duration-300">
+      <div 
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Study setup sheet"
+        className="relative bg-surface w-full max-w-lg rounded-t-3xl p-6 pb-8 pb-safe-bottom border-t border-white/10 z-10 transition-transform duration-300"
+      >
         <div className="w-12 h-1 bg-text-secondary rounded-full mx-auto mb-6" />
         
         {/* Close Button */}
         {sheetState !== 'generating' && (
-          <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary bg-transparent border-none outline-none cursor-pointer">
+          <button onClick={onClose} aria-label="Close" className="absolute top-4 right-4 text-text-secondary hover:text-text-primary bg-transparent border-none outline-none cursor-pointer">
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         )}
@@ -467,10 +519,11 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
               <p className="text-text-secondary font-body text-sm mb-6">{q.subtext}</p>
               
               {q.type === 'pills' && (
-                <div className="flex flex-col gap-3">
+                <div role="list" className="flex flex-col gap-3">
                   {q.options?.map(opt => (
                     <button
                       key={opt.id}
+                      role="listitem"
                       onClick={() => handlePillSelect(opt.id)}
                       className="w-full text-left bg-surface-low border border-ghost-border hover:bg-surface-mid transition-colors rounded-xl px-5 py-3.5 text-sm font-medium text-text-body active:scale-[0.99] font-body cursor-pointer"
                     >
@@ -524,7 +577,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="relative mb-8">
               <div className="absolute inset-0 bg-[rgba(79,142,247,0.08)] rounded-full w-24 h-24 blur-[20px] glow-breathe" />
-              <img src="/logo.svg" alt="Klaivo" className="relative w-12 h-12 k-breathe" />
+              <img src="/logo.svg" alt="Klaivo" className="relative w-12 h-12 k-breathe" loading="lazy" />
             </div>
             <h3 className="text-lg font-headline font-bold text-text-primary mb-2">Generating study resources</h3>
             <p className="text-text-body font-body text-sm max-w-xs transition-all duration-300 min-h-[40px]">{currentMessage}</p>

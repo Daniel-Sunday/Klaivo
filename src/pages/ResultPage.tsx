@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { refineAnswer, generateFollowUp, stripMarkdownForCopy } from '../lib/api';
 import { getModeSchema } from '../lib/promptBuilder';
 import { Session, FollowUp } from '../types';
+import { analytics } from '../lib/analytics';
 
 interface CollapsibleItem {
   question: string;
@@ -114,15 +115,18 @@ export default function ResultPage() {
     navigator.clipboard.writeText(stripMarkdownForCopy(text));
     setCopiedCardKey(key);
     showToast('Copied to clipboard ✓');
+    analytics.resultCopied();
     setTimeout(() => setCopiedCardKey(null), 3000);
   };
 
   const handleShare = async () => {
     try {
       await supabase.from('sessions').update({ is_shared: true }).eq('id', sessionId);
-      const shareUrl = `https://klaivo.app/s/${sessionId}`;
+      setSession((prev) => prev ? { ...prev, is_shared: true } : null);
+      const shareUrl = `${window.location.origin}/s/${sessionId}`;
       await navigator.clipboard.writeText(shareUrl);
-      showToast('Link copied — share it with anyone ✓');
+      showToast('Share link copied ✓ — send it to anyone');
+      analytics.shareResultTapped();
     } catch (err: any) {
       console.error(err);
       showToast('Failed to copy link');
@@ -132,28 +136,21 @@ export default function ResultPage() {
   const handleRefine = async (type: string) => {
     if (!session) return;
     setRefining(type === 'simplify' ? 'Simplify' : 'Go Deeper');
+    analytics.refinementUsed(type);
     try {
       const heroKey = session.mode === 'write' ? 'full_draft' : session.mode === 'revise' ? 'full_notes' : 'full_answer';
       const existingFullAnswer = (session.result_json && session.result_json[heroKey]) || '';
       const modeSchema = getModeSchema(session.mode);
 
-      // Sanitize existingFullAnswer before sending: remove or escape any unescaped quotes, newlines, or control characters
-      const sanitizedAnswer = existingFullAnswer
-        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
-        .replace(/(?<!\\)"/g, '\\"')
-        .replace(/(?<!\\)\n/g, '\\n')
-        .replace(/(?<!\\)\r/g, '\\r');
-
-      // Wrap the value like this before including it: const safeAnswer = JSON.stringify(existingFullAnswer) and pass the parsed value cleanly inside the body object
-      const safeAnswer = JSON.stringify(sanitizedAnswer);
-      const parsedAnswer = JSON.parse(safeAnswer) as string;
+      // Remove control characters only; native JSON.stringify in callAPI handles escaping natively
+      const sanitizedAnswer = existingFullAnswer.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '');
 
       const response = await refineAnswer({
         type,
         topic: session.topic,
         mode: session.mode,
         level: session.level,
-        existingFullAnswer: parsedAnswer,
+        existingFullAnswer: sanitizedAnswer,
         modeSchema
       });
 
@@ -178,6 +175,7 @@ export default function ResultPage() {
   const sendFollowUp = async (question: string): Promise<void> => {
     if (!question.trim() || followUps.length >= 3 || !session) return;
     setFollowUpLoading(true);
+    analytics.followUpSent(question.length);
     const result = session.result_json || {};
     const heroKey = session.mode === 'write' ? 'full_draft' : session.mode === 'revise' ? 'full_notes' : 'full_answer';
 
@@ -185,13 +183,16 @@ export default function ResultPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const { answer } = await generateFollowUp({
+      const res = await generateFollowUp({
         question,
         sessionId: sessionId!,
         originalFullAnswer: result[heroKey] || '',
         originalTopic: session.topic,
         conversationHistory: followUps.map(f => ({ question: f.question, answer: f.answer }))
       });
+
+      const answer = res.answer || res.result;
+      if (!answer) throw new Error('No answer returned from follow up generator');
 
       const { error: insertError } = await supabase.from('follow_ups').insert({
         session_id: sessionId,
@@ -321,18 +322,26 @@ export default function ResultPage() {
               {session.topic}
             </h1>
           </div>
-          <button 
-            onClick={handleShare}
-            className="text-text-secondary hover:text-text-body p-2 hover:bg-surface-low rounded-full transition-colors flex items-center justify-center"
-            aria-label="Share"
-          >
-            <span className="material-symbols-outlined text-[20px]">share</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {session.is_shared && (
+              <span className="text-[10px] bg-accent/20 text-accent font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider select-none">
+                Shared
+              </span>
+            )}
+            <button 
+              onClick={handleShare}
+              className="text-text-secondary hover:text-text-body p-2 hover:bg-surface-low rounded-full transition-colors flex items-center justify-center bg-transparent border-none cursor-pointer"
+              aria-label="Share"
+              title="Share this result"
+            >
+              <span className="material-symbols-outlined text-[20px]">share</span>
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow max-w-3xl mx-auto w-full px-6 pt-24 pb-16">
+      <main id="main-content" className="flex-grow max-w-3xl mx-auto w-full px-6 pt-24 pb-16">
         <div 
           className="space-y-6 transition-all duration-500 ease-in-out" 
           style={{ opacity: refining ? 0.4 : 1 }}
@@ -366,6 +375,7 @@ export default function ResultPage() {
                   {isHero && (
                     <button
                       onClick={() => handleCopy(content, card.key)}
+                      aria-label="Copy full content"
                       className="text-text-secondary hover:text-text-body p-1.5 hover:bg-white/5 rounded-full transition-all flex items-center justify-center"
                       title="Copy full content"
                     >
@@ -425,10 +435,11 @@ export default function ResultPage() {
                 )}
 
                 {card.type === 'questions' && Array.isArray(content) && (
-                  <div className="space-y-3">
+                  <div role="list" className="space-y-3">
                     {content.map((item: CollapsibleItem, idx: number) => (
                       <details 
                         key={idx} 
+                        role="listitem"
                         className="group bg-surface-low border border-ghost-border rounded-xl overflow-hidden [&_summary::-webkit-details-marker]:hidden"
                       >
                         <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/[0.02] transition-colors select-none font-['Inter',sans-serif]">
@@ -444,11 +455,11 @@ export default function ResultPage() {
                 )}
 
                 {card.type === 'test_questions' && Array.isArray(content) && (
-                  <div className="space-y-4">
+                  <div role="list" className="space-y-4">
                     {content.map((qText: string, idx: number) => {
                       const isRevealed = revealedTestQuestions[idx] || false;
                       return (
-                        <div key={idx} className="bg-surface-low border border-ghost-border rounded-xl p-4 space-y-3 font-['Inter',sans-serif]">
+                        <div key={idx} role="listitem" className="bg-surface-low border border-ghost-border rounded-xl p-4 space-y-3 font-['Inter',sans-serif]">
                           <p className="text-sm font-semibold text-text-primary">
                             {idx + 1}. {qText}
                           </p>
@@ -531,6 +542,7 @@ export default function ResultPage() {
                     if (isPro) {
                       navigate(`/${f.route}/${sessionId}`);
                     } else {
+                      analytics.proFeatureTapped(f.route);
                       navigate(`/upgrade?from=${f.route}`);
                     }
                   }}
@@ -573,7 +585,7 @@ export default function ResultPage() {
                 <div className="flex justify-start">
                   <div className="bg-bg-secondary border border-ghost-border rounded-2xl px-5 py-4 max-w-[95%] sm:max-w-xl shadow-sm space-y-2">
                     <div className="flex items-center gap-2 mb-1">
-                      <img src="/logo.svg" alt="Klaivo" className="w-5 h-5" />
+                      <img src="/logo.svg" alt="Klaivo" className="w-5 h-5" loading="lazy" />
                       <span className="text-xs font-bold text-accent font-['Manrope',sans-serif]">Klaivo</span>
                     </div>
                     {renderProse(fu.answer)}
@@ -587,7 +599,7 @@ export default function ResultPage() {
           {followUpLoading && (
             <div className="flex justify-start pt-4 border-t border-ghost-border">
               <div className="bg-bg-secondary border border-ghost-border rounded-2xl px-5 py-4 flex items-center gap-2">
-                <img src="/logo.svg" alt="Klaivo" className="w-5 h-5 k-breathe" />
+                <img src="/logo.svg" alt="Klaivo" className="w-5 h-5 k-breathe" loading="lazy" />
                 <div className="flex items-center gap-1 font-['Inter',sans-serif] text-[20px] text-accent font-bold leading-none select-none">
                   <span className="animate-[pulse_1.4s_infinite] [animation-delay:0s]">.</span>
                   <span className="animate-[pulse_1.4s_infinite] [animation-delay:0.2s]">.</span>

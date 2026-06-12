@@ -170,7 +170,7 @@ export default function OnboardingPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" />
+        <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" loading="lazy" />
       </div>
     );
   }
@@ -184,12 +184,12 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <main id="main-content" className="min-h-screen bg-bg-primary text-text-primary flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {screen === 1 && (
         <div className="flex flex-col items-center justify-center space-y-8 text-center">
           <div className="relative">
             <div className="absolute inset-0 rounded-full w-40 h-40 blur-[40px] glow-breathe" style={{ background: 'var(--accent-glow)' }} />
-            <img src="/logo.svg" alt="Klaivo" className="relative w-20 h-20 k-breathe" />
+            <img src="/logo.svg" alt="Klaivo" className="relative w-20 h-20 k-breathe" loading="lazy" />
           </div>
 
           <div className="space-y-4">
@@ -222,7 +222,7 @@ export default function OnboardingPage() {
       {screen === 2 && (
         <div className="flex flex-col items-center justify-center space-y-8 text-center max-w-sm w-full">
           <div className="space-y-4">
-            <img src="/logo.svg" alt="Klaivo" className="w-12 h-12" />
+            <img src="/logo.svg" alt="Klaivo" className="w-12 h-12" loading="lazy" />
             <p className="text-[24px] font-bold text-text-primary font-['Manrope']">
               One quick thing.
             </p>
@@ -292,7 +292,7 @@ export default function OnboardingPage() {
         <div className="flex flex-col items-center justify-center space-y-8 text-center max-w-sm w-full">
           <div className="relative">
             <div className="absolute inset-0 rounded-full w-32 h-32 blur-[40px] glow-breathe" style={{ background: 'var(--accent-glow)' }} />
-            <img src="/logo.svg" alt="Klaivo" className="relative w-16 h-16 k-breathe" />
+            <img src="/logo.svg" alt="Klaivo" className="relative w-16 h-16 k-breathe" loading="lazy" />
           </div>
 
           <div className="space-y-4">
@@ -323,6 +323,6 @@ export default function OnboardingPage() {
           animation: fadeIn 0.4s ease-out forwards;
         }
       `}</style>
-    </div>
+      </main>
   );
 }
