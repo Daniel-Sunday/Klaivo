@@ -32,7 +32,7 @@ export default function PrivacyPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow max-w-2xl mx-auto w-full px-6 pt-28 pb-16 overflow-y-auto leading-relaxed">
+      <main id="main-content" className="flex-grow max-w-2xl mx-auto w-full px-6 pt-28 pb-16 overflow-y-auto leading-relaxed">
         <div className="space-y-8">
           <section className="space-y-4">
             <h2 className="font-['Manrope',sans-serif] text-xl font-bold" style={{ color: 'var(--text-primary)' }}>

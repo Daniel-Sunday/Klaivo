@@ -169,7 +169,7 @@ export default function UpgradePage() {
       </header>
 
       {/* ─── Main ─── */}
-      <main className="flex-grow max-w-2xl mx-auto w-full px-6 pt-24 pb-16">
+      <main id="main-content" className="flex-grow max-w-2xl mx-auto w-full px-6 pt-24 pb-16">
 
         {/* ── Hero ── */}
         <section className="text-center pt-6 pb-10">

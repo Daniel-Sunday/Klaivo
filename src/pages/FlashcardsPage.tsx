@@ -289,7 +289,7 @@ export default function FlashcardsPage() {
       </header>
 
       {/* Main Flashcard Container */}
-      <main className="flex-grow flex flex-col items-center justify-center p-6 pt-20 pb-8 max-w-md w-full mx-auto">
+      <main id="main-content" className="flex-grow flex flex-col items-center justify-center p-6 pt-20 pb-8 max-w-md w-full mx-auto">
         {/* Progress Bar */}
         <div className="w-full bg-white/5 h-1 rounded-full mb-8 overflow-hidden">
           <div 

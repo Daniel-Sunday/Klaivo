@@ -221,6 +221,46 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
   const [profile, setProfile] = useState<any>(null);
   const [isReadingImageState, setIsReadingImageState] = useState(false);
   const imageBase64Ref = useRef<string | null>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'Tab') {
+        const focusable = sheetRef.current?.querySelectorAll<HTMLElement>(
+          'button, input, textarea, [tabindex]'
+        );
+        if (!focusable?.length) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        const firstFocusable = sheetRef.current?.querySelector<HTMLElement>(
+          'button, input, textarea'
+        );
+        firstFocusable?.focus();
+      }, 100);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (uploadedImageBase64) {
@@ -454,12 +494,18 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
       {/* Drawer Body */}
-      <div className="relative bg-surface w-full max-w-lg rounded-t-3xl p-6 pb-8 pb-safe-bottom border-t border-white/10 z-10 transition-transform duration-300">
+      <div 
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Study setup sheet"
+        className="relative bg-surface w-full max-w-lg rounded-t-3xl p-6 pb-8 pb-safe-bottom border-t border-white/10 z-10 transition-transform duration-300"
+      >
         <div className="w-12 h-1 bg-text-secondary rounded-full mx-auto mb-6" />
         
         {/* Close Button */}
         {sheetState !== 'generating' && (
-          <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary bg-transparent border-none outline-none cursor-pointer">
+          <button onClick={onClose} aria-label="Close" className="absolute top-4 right-4 text-text-secondary hover:text-text-primary bg-transparent border-none outline-none cursor-pointer">
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         )}
@@ -473,10 +519,11 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
               <p className="text-text-secondary font-body text-sm mb-6">{q.subtext}</p>
               
               {q.type === 'pills' && (
-                <div className="flex flex-col gap-3">
+                <div role="list" className="flex flex-col gap-3">
                   {q.options?.map(opt => (
                     <button
                       key={opt.id}
+                      role="listitem"
                       onClick={() => handlePillSelect(opt.id)}
                       className="w-full text-left bg-surface-low border border-ghost-border hover:bg-surface-mid transition-colors rounded-xl px-5 py-3.5 text-sm font-medium text-text-body active:scale-[0.99] font-body cursor-pointer"
                     >

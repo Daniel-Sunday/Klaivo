@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 interface FaqItem {
@@ -172,7 +172,7 @@ export default function LandingPage() {
           </div>
         </div>
       </header>
-      <main className="pt-24 md:pt-32 pb-20">
+      <main id="main-content" className="pt-24 md:pt-32 pb-20">
         <section className="px-6 mx-auto max-w-lg md:max-w-3xl flex flex-col items-center text-center mb-32 pt-12">
           <h1 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tight leading-tight text-text-primary mb-8">
             The AI for students who&apos;ve outgrown the old way.
@@ -232,13 +232,13 @@ export default function LandingPage() {
             )}
             <p className="text-xs text-text-secondary pt-4 leading-relaxed">
               By continuing, you agree to Klaivo&apos;s{' '}
-              <a className="underline hover:text-text-body transition-colors" href="/terms">
+              <Link className="underline hover:text-text-body transition-colors" to="/terms">
                 Terms of Service
-              </a>{' '}
+              </Link>{' '}
               and{' '}
-              <a className="underline hover:text-text-body transition-colors" href="/privacy">
+              <Link className="underline hover:text-text-body transition-colors" to="/privacy">
                 Privacy Policy
-              </a>
+              </Link>
               .
             </p>
           </div>
@@ -490,18 +490,18 @@ export default function LandingPage() {
             <span className="text-text-secondary text-sm">Think with AI. Study like never before.</span>
           </div>
           <div className="flex flex-wrap justify-center gap-6">
-            <a
+            <Link
               className="text-text-secondary hover:text-text-primary text-sm underline-offset-4 hover:underline transition-colors"
-              href="/privacy"
+              to="/privacy"
             >
               Privacy Policy
-            </a>
-            <a
+            </Link>
+            <Link
               className="text-text-secondary hover:text-text-primary text-sm underline-offset-4 hover:underline transition-colors"
-              href="/terms"
+              to="/terms"
             >
               Terms of Service
-            </a>
+            </Link>
             <a
               className="text-text-secondary hover:text-text-primary text-sm underline-offset-4 hover:underline transition-colors"
               href="#"

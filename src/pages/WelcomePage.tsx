@@ -209,7 +209,7 @@ export default function WelcomePage() {
       </header>
 
       {/* Main Content Canvas */}
-      <main className="flex-grow flex flex-col px-6 pt-28 pb-8 max-w-2xl mx-auto w-full">
+      <main id="main-content" className="flex-grow flex flex-col px-6 pt-28 pb-8 max-w-2xl mx-auto w-full">
         <div className="my-auto flex flex-col items-center w-full">
           {/* Greeting - Bold and Heavy */}
           <div className="mb-8 w-full text-center">
@@ -295,6 +295,7 @@ export default function WelcomePage() {
               {/* Blue Circular Arrow Send Button */}
               <button
                 onClick={handleSend}
+                aria-label="Send study prompt"
                 disabled={topic.length < 10 || isUploading}
                 style={{
                   boxShadow: '0 4px 14px var(--accent-glow)'

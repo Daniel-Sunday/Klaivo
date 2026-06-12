@@ -149,6 +149,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/home')}
+              aria-label="Return Home"
               className="text-text-secondary hover:text-text-primary p-1 rounded-full transition-colors flex items-center justify-center bg-transparent border-none cursor-pointer"
               title="Return Home"
             >
@@ -165,7 +166,7 @@ export default function AdminPage() {
       </header>
 
       {/* Main dashboard content */}
-      <main className="max-w-7xl mx-auto w-full px-6 pt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <main id="main-content" className="max-w-7xl mx-auto w-full px-6 pt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
         {/* Section: Conversion */}
         <section className="bg-surface-low border border-ghost-border rounded-2xl p-6 flex flex-col justify-between">
@@ -294,6 +295,7 @@ export default function AdminPage() {
               </h2>
               <button
                 onClick={handleCSVExport}
+                aria-label="Export CSV"
                 className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border border-accent/30 text-accent hover:bg-accent/10 rounded-full transition-colors flex items-center gap-1 bg-transparent cursor-pointer"
                 title="Export CSV"
               >
@@ -378,10 +380,11 @@ export default function AdminPage() {
           ) : (
             <div className="space-y-2.5 max-h-[350px] overflow-y-auto pr-2">
               {recentSessions.map((s) => (
-                <div
+                <button
                   key={s.id}
                   onClick={() => setSelectedSession(s)}
-                  className="bg-bg-secondary hover:bg-surface border border-ghost-border hover:border-accent/20 rounded-xl p-3.5 flex justify-between items-center cursor-pointer transition-all duration-200"
+                  aria-label="View session details"
+                  className="w-full text-left bg-bg-secondary hover:bg-surface border border-ghost-border hover:border-accent/20 rounded-xl p-3.5 flex justify-between items-center cursor-pointer transition-all duration-200"
                 >
                   <div className="min-w-0 flex-1 pr-4">
                     <p className="text-sm font-semibold text-text-primary truncate">{s.topic}</p>
@@ -400,7 +403,7 @@ export default function AdminPage() {
                   <span className="text-[10px] text-text-secondary font-medium shrink-0">
                     {formatTimeAgo(s.created_at)}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -450,6 +453,7 @@ export default function AdminPage() {
               </h3>
               <button
                 onClick={() => setSelectedSession(null)}
+                aria-label="Close"
                 className="text-text-secondary hover:text-text-primary p-1 rounded-full transition-colors flex items-center justify-center bg-transparent border-none cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>

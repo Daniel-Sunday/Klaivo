@@ -184,7 +184,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <main id="main-content" className="min-h-screen bg-bg-primary text-text-primary flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {screen === 1 && (
         <div className="flex flex-col items-center justify-center space-y-8 text-center">
           <div className="relative">
@@ -323,6 +323,6 @@ export default function OnboardingPage() {
           animation: fadeIn 0.4s ease-out forwards;
         }
       `}</style>
-    </div>
+      </main>
   );
 }

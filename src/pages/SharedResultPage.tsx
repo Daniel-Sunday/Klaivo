@@ -130,9 +130,10 @@ export default function SharedResultPage() {
     <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white pt-12">
       {/* Monogram Top Header */}
       <header className="px-6 py-4 flex flex-col items-center select-none">
-        <div 
+        <button 
           onClick={() => navigate('/')} 
-          className="flex flex-col items-center gap-1.5 cursor-pointer group"
+          aria-label="Klaivo Home"
+          className="flex flex-col items-center gap-1.5 cursor-pointer group bg-transparent border-none"
         >
           <img 
             src="/logo.svg" 
@@ -143,11 +144,11 @@ export default function SharedResultPage() {
           <span className="font-['Manrope'] font-bold text-text-primary text-sm tracking-tight group-hover:text-accent transition-colors">
             klaivo.app
           </span>
-        </div>
+        </button>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow max-w-2xl mx-auto w-full px-6 pt-6 pb-20">
+      <main id="main-content" className="flex-grow max-w-2xl mx-auto w-full px-6 pt-6 pb-20">
         {/* Pills */}
         <div className="flex flex-wrap gap-2 justify-center mb-8">
           <span className="bg-surface-low border border-ghost-border text-text-body px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide max-w-[200px] truncate">
@@ -175,6 +176,7 @@ export default function SharedResultPage() {
             {heroContent && (
               <button
                 onClick={() => handleCopy(heroContent)}
+                aria-label="Copy content"
                 className="text-text-secondary hover:text-text-body p-1.5 hover:bg-white/5 rounded-full transition-all flex items-center justify-center"
                 title="Copy content"
               >

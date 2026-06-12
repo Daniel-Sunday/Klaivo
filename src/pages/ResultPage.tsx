@@ -341,7 +341,7 @@ export default function ResultPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow max-w-3xl mx-auto w-full px-6 pt-24 pb-16">
+      <main id="main-content" className="flex-grow max-w-3xl mx-auto w-full px-6 pt-24 pb-16">
         <div 
           className="space-y-6 transition-all duration-500 ease-in-out" 
           style={{ opacity: refining ? 0.4 : 1 }}
@@ -375,6 +375,7 @@ export default function ResultPage() {
                   {isHero && (
                     <button
                       onClick={() => handleCopy(content, card.key)}
+                      aria-label="Copy full content"
                       className="text-text-secondary hover:text-text-body p-1.5 hover:bg-white/5 rounded-full transition-all flex items-center justify-center"
                       title="Copy full content"
                     >
@@ -434,10 +435,11 @@ export default function ResultPage() {
                 )}
 
                 {card.type === 'questions' && Array.isArray(content) && (
-                  <div className="space-y-3">
+                  <div role="list" className="space-y-3">
                     {content.map((item: CollapsibleItem, idx: number) => (
                       <details 
                         key={idx} 
+                        role="listitem"
                         className="group bg-surface-low border border-ghost-border rounded-xl overflow-hidden [&_summary::-webkit-details-marker]:hidden"
                       >
                         <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/[0.02] transition-colors select-none font-['Inter',sans-serif]">
@@ -453,11 +455,11 @@ export default function ResultPage() {
                 )}
 
                 {card.type === 'test_questions' && Array.isArray(content) && (
-                  <div className="space-y-4">
+                  <div role="list" className="space-y-4">
                     {content.map((qText: string, idx: number) => {
                       const isRevealed = revealedTestQuestions[idx] || false;
                       return (
-                        <div key={idx} className="bg-surface-low border border-ghost-border rounded-xl p-4 space-y-3 font-['Inter',sans-serif]">
+                        <div key={idx} role="listitem" className="bg-surface-low border border-ghost-border rounded-xl p-4 space-y-3 font-['Inter',sans-serif]">
                           <p className="text-sm font-semibold text-text-primary">
                             {idx + 1}. {qText}
                           </p>

@@ -25,13 +25,13 @@ export default function SideDrawer({ isOpen, onClose }: SideDrawerProps) {
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-xl font-bold text-text-primary font-['Manrope',sans-serif]">Menu</h2>
-            <button onClick={onClose} className="text-text-secondary hover:text-text-primary bg-transparent border-none cursor-pointer flex items-center justify-center">
+            <button onClick={onClose} aria-label="Close menu" className="text-text-secondary hover:text-text-primary bg-transparent border-none cursor-pointer flex items-center justify-center">
               <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
           </div>
           
           {/* Navigation Links */}
-          <nav className="space-y-4 flex flex-col items-start font-['Inter',sans-serif]">
+          <nav aria-label="Side menu" className="space-y-4 flex flex-col items-start font-['Inter',sans-serif]">
             <button
               onClick={() => {
                 navigate('/history');

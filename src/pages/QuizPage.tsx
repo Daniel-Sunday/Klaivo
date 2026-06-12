@@ -340,7 +340,7 @@ export default function QuizPage() {
       </header>
 
       {/* Main Quiz Area */}
-      <main className="flex-grow flex flex-col p-6 pt-24 pb-8 max-w-md w-full mx-auto">
+      <main id="main-content" className="flex-grow flex flex-col p-6 pt-24 pb-8 max-w-md w-full mx-auto">
         {/* Segmented progress bar — 5 segments */}
         <div className="w-full flex gap-1.5 mb-8">
           {Array.from({ length: questions.length }).map((_, i) => {
