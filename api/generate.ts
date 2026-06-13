@@ -86,6 +86,7 @@ export default async function handler(req: Request): Promise<Response> {
         }
       ],
       generationConfig: {
+        responseMimeType: 'application/json',
         thinkingConfig: {
           thinkingBudget: 0
         }

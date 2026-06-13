@@ -81,6 +81,7 @@ export default async function handler(req: Request): Promise<Response> {
           contents: [{ role: 'user', parts: [{ text: userMessage }] }],
           generationConfig: {
             maxOutputTokens: maxTokens,
+            responseMimeType: 'application/json',
             thinkingConfig: {
               thinkingBudget: 0
             }
