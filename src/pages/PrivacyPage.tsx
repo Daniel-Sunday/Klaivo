@@ -5,7 +5,7 @@ export default function PrivacyPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white"
+      className="min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white page-transition"
       style={{ background: 'var(--bg-primary)', color: 'var(--text-body)' }}
     >
       <header

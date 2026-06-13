@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useToast } from '../context/ToastContext';
 
 /* ──────────────────────── Types ──────────────────────── */
 type Geo = 'NG' | 'INT';
@@ -87,19 +88,8 @@ export default function UpgradePage() {
   const [geo, setGeo] = useState<Geo>('INT');
   const [selectedPlan, setSelectedPlan] = useState<string>('annual_int');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [processing, setProcessing] = useState(false);
-
-  useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => {
-        setToastMessage(null);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
-
-  const showToast = (msg: string) => setToastMessage(msg);
 
   useEffect(() => {
     detectGeo().then((g) => {
@@ -165,7 +155,7 @@ export default function UpgradePage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white"
+      className="min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white page-transition"
       style={{ background: 'var(--bg-primary)', color: 'var(--text-body)' }}
     >
       {/* ─── Top Bar ─── */}
@@ -355,14 +345,6 @@ export default function UpgradePage() {
           </div>
         </section>
       </main>
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low/90 backdrop-blur-md border border-primary/30 text-text-primary px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm">
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
-          <span>{toastMessage}</span>
-        </div>
-      )}
     </div>
   );
 }

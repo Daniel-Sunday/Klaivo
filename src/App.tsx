@@ -1,9 +1,10 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { StudyProvider } from './context/StudyContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { analytics } from './lib/analytics';
+import { useToast } from './context/ToastContext';
 
 let deferredInstallPrompt: any = null;
 
@@ -51,8 +52,7 @@ function SplashLoader() {
 }
 
 export default function App() {
-  const [showOfflineToast, setShowOfflineToast] = useState(false);
-  const [toastType, setToastType] = useState<'offline' | 'online' | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -63,34 +63,51 @@ export default function App() {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
+  // Keyboard scrolling fix for focused inputs/textareas on mobile viewports
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+
+    const handleResize = () => {
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')
+      ) {
+        setTimeout(() => {
+          activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+      }
+    };
+
+    const viewport = window.visualViewport;
+    viewport.addEventListener('resize', handleResize);
+    return () => viewport.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Offline/Online connections check
   useEffect(() => {
     const handleOnline = () => {
-      setToastType('online');
-      setShowOfflineToast(true);
-      const timer = setTimeout(() => {
-        setShowOfflineToast(false);
-      }, 3000);
-      return () => clearTimeout(timer);
+      showToast("Back online! Connection restored.", "success");
     };
 
     const handleOffline = () => {
-      setToastType('offline');
-      setShowOfflineToast(true);
+      showToast("You're offline. Your last sessions are still saved. Connect to keep studying.", "warning");
     };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     if (!navigator.onLine) {
-      setToastType('offline');
-      setShowOfflineToast(true);
+      setTimeout(() => {
+        showToast("You're offline. Your last sessions are still saved. Connect to keep studying.", "warning");
+      }, 500);
     }
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [showToast]);
 
   return (
     <AuthProvider>
@@ -118,45 +135,6 @@ export default function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
-
-          {/* Global Offline/Online Toast */}
-          {showOfflineToast && (
-            <div 
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2.5 px-5 py-3.5 rounded-xl shadow-2xl transition-all duration-300 font-medium text-sm backdrop-blur-md"
-              style={{
-                background: 'var(--surface-low)',
-                color: 'var(--text-primary)',
-                border: `1px solid ${toastType === 'offline' ? 'var(--danger)' : 'var(--success)'}`,
-                boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-              }}
-            >
-              <span 
-                className="material-symbols-outlined text-[20px] select-none"
-                style={{ color: toastType === 'offline' ? 'var(--danger)' : 'var(--success)' }}
-              >
-                {toastType === 'offline' ? 'wifi_off' : 'wifi'}
-              </span>
-              <span>
-                {toastType === 'offline' ? (
-                  <>
-                    You're offline. Your last sessions are still saved.<br />
-                    Connect and come back to keep studying.
-                  </>
-                ) : (
-                  "Back online! Connection restored."
-                )}
-              </span>
-              {toastType === 'offline' && (
-                <button 
-                  onClick={() => setShowOfflineToast(false)}
-                  className="ml-2 text-text-secondary hover:text-text-primary text-xs bg-transparent border-none cursor-pointer p-0.5 flex items-center justify-center rounded-full hover:bg-white/5"
-                  aria-label="Dismiss offline notification"
-                >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
-                </button>
-              )}
-            </div>
-          )}
         </BrowserRouter>
       </StudyProvider>
     </AuthProvider>

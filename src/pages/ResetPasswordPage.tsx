@@ -67,7 +67,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-6"
+      className="min-h-screen flex flex-col items-center justify-center px-6 page-transition"
       style={{ background: 'var(--bg-primary)' }}
     >
       {/* Klaivo Logo */}

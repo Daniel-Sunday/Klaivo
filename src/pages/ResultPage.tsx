@@ -8,6 +8,7 @@ import { Session, FollowUp } from '../types';
 import { analytics } from '../lib/analytics';
 import { InstallBanner } from '../components/InstallBanner';
 import { showInstallPrompt, getDeferredInstallPrompt, clearDeferredInstallPrompt } from '../App';
+import { useToast } from '../context/ToastContext';
 
 interface CollapsibleItem {
   question: string;
@@ -95,7 +96,7 @@ export default function ResultPage() {
 
   // Copy states
   const [copiedCardKey, setCopiedCardKey] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   // Feedback/Report states
   const [reportOpen, setReportOpen] = useState(false);
@@ -126,24 +127,12 @@ export default function ResultPage() {
     if (sessionId) loadSession();
   }, [sessionId]);
 
-  // Toast automatic dismiss effect
-  useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => {
-        setToastMessage(null);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-  };
+  // Toast automatic dismiss effect and local showToast removed (now using useToast hook)
 
   const handleCopy = (text: string, key: string): void => {
     navigator.clipboard.writeText(stripMarkdownForCopy(text));
     setCopiedCardKey(key);
-    showToast('Copied to clipboard ✓');
+    showToast('Copied to clipboard ✓', 'success');
     analytics.resultCopied();
     setTimeout(() => setCopiedCardKey(null), 3000);
   };
@@ -154,11 +143,11 @@ export default function ResultPage() {
       setSession((prev) => prev ? { ...prev, is_shared: true } : null);
       const shareUrl = `${window.location.origin}/s/${sessionId}`;
       await navigator.clipboard.writeText(shareUrl);
-      showToast('Share link copied ✓ — send it to anyone');
+      showToast('Share link copied ✓ — send it to anyone', 'success');
       analytics.shareResultTapped();
     } catch (err: any) {
       console.error(err);
-      showToast('Failed to copy link');
+      showToast('Failed to copy link', 'error');
     }
   };
 
@@ -191,11 +180,11 @@ export default function ResultPage() {
 
         if (updateError) throw updateError;
         setSession((prev) => prev ? { ...prev, result_json: response.result } : null);
-        showToast(`Refinement complete!`);
+        showToast(`Refinement complete!`, 'success');
       }
     } catch (err: any) {
       console.error(err);
-      showToast(err.message || 'Failed to refine answer');
+      showToast(err.message || 'Failed to refine answer', 'error');
     } finally {
       setRefining(null);
     }
@@ -235,7 +224,7 @@ export default function ResultPage() {
       setFollowUpText('');
     } catch (err: any) {
       console.error(err);
-      showToast(err.message || 'Failed to send follow up');
+      showToast(err.message || 'Failed to send follow up', 'error');
     } finally {
       setFollowUpLoading(false);
     }
@@ -253,12 +242,12 @@ export default function ResultPage() {
         created_at: new Date().toISOString()
       });
       if (error) throw error;
-      showToast('Problem reported successfully ✓');
+      showToast('Problem reported successfully ✓', 'success');
       setReportOpen(false);
       setIssueText('');
     } catch (err: any) {
       console.error(err);
-      showToast(err.message || 'Failed to send report');
+      showToast(err.message || 'Failed to send report', 'error');
     } finally {
       setReporting(false);
     }
@@ -338,7 +327,7 @@ export default function ResultPage() {
   const result = session.result_json || {};
 
   return (
-    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white">
+    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white page-transition">
       {/* Dynamic Header */}
       <header
         className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50"
@@ -680,14 +669,6 @@ export default function ResultPage() {
           )}
         </div>
       </main>
-
-      {/* Custom Alert/Error Toast */}
-      {toastMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low/90 backdrop-blur-md border border-accent/30 text-text-primary px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm">
-          <span className="material-symbols-outlined text-accent text-[20px]">info</span>
-          <span>{toastMessage}</span>
-        </div>
-      )}
 
       {/* PWA Install Banner Nudge */}
       {showInstallBanner && (

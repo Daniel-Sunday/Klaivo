@@ -142,7 +142,7 @@ export default function AdminPage() {
   });
 
   return (
-    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white pb-20">
+    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white pb-20 page-transition">
       <header
         className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-45"
         style={{ paddingTop: 'calc(12px + var(--sat))' }}

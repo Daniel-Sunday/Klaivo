@@ -6,6 +6,7 @@ import { buildFlashcardsPrompt } from '../lib/promptBuilder';
 import { useAuth } from '../context/AuthContext';
 import FreemiumGate from '../components/FreemiumGate';
 import { analytics } from '../lib/analytics';
+import { haptic } from '../lib/haptic';
 
 interface Flashcard {
   question: string;
@@ -71,7 +72,7 @@ export default function FlashcardsPage() {
         }
       } catch (err: any) {
         console.error(err);
-        setError(err.message || 'Failed to generate flashcards');
+        setError(err.message || "Something interrupted generating your flashcards. Let's try again.");
       } finally {
         setGenerating(false);
       }
@@ -165,7 +166,7 @@ export default function FlashcardsPage() {
     return (
       <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center text-text-body font-['Inter',sans-serif] p-6 text-center">
         <span className="material-symbols-outlined text-danger text-5xl mb-4">error</span>
-        <h3 className="text-lg font-['Manrope',sans-serif] font-bold text-text-primary mb-2">Generation Failed</h3>
+        <h3 className="text-lg font-['Manrope',sans-serif] font-bold text-text-primary mb-2">Something interrupted generating your flashcards</h3>
         <p className="text-sm text-text-body max-w-xs mb-6">{error || 'Could not generate flashcards.'}</p>
         <button 
           onClick={() => navigate(`/result/${sessionId}`)} 
@@ -272,7 +273,7 @@ export default function FlashcardsPage() {
   };
 
   return (
-    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white">
+    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white page-transition">
       {/* Top Header */}
       <header
         className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50"
@@ -340,23 +341,52 @@ export default function FlashcardsPage() {
 
         {/* Navigation Controls */}
         <div className="w-full mt-8 flex items-center justify-between gap-4">
-          <button
-            onClick={handlePrev}
-            disabled={currentIndex === 0}
-            className="px-5 py-3 rounded-full text-xs font-semibold bg-bg-secondary hover:bg-surface-low border border-ghost-border text-text-body transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.98]"
-          >
-            ← Previous
-          </button>
-          
-          <button
-            onClick={handleNext}
-            style={{
-              boxShadow: '0 4px 12px var(--accent-glow)'
-            }}
-            className="px-6 py-3 rounded-full text-xs font-semibold bg-accent hover:bg-accent/90 text-white transition-all active:scale-[0.98]"
-          >
-            {currentIndex === totalCards - 1 ? 'Complete deck ✓' : 'Next Card →'}
-          </button>
+          {!isFlipped ? (
+            <>
+              <button
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+                className="px-5 py-3 rounded-full text-xs font-semibold bg-bg-secondary hover:bg-surface-low border border-ghost-border text-text-body transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.98]"
+              >
+                ← Previous
+              </button>
+              
+              <button
+                onClick={() => {
+                  haptic(15);
+                  setIsFlipped(true);
+                }}
+                className="px-6 py-3 rounded-full text-xs font-semibold bg-accent hover:bg-accent/90 text-white transition-all active:scale-[0.98]"
+              >
+                Reveal Answer →
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => {
+                  haptic([25, 30]);
+                  handleNext();
+                }}
+                className="px-5 py-3 rounded-full text-xs font-semibold bg-surface hover:bg-surface-low border border-danger/30 text-danger transition-all active:scale-[0.98] flex-1 text-center"
+              >
+                Not yet
+              </button>
+              
+              <button
+                onClick={() => {
+                  haptic(15);
+                  handleNext();
+                }}
+                className="px-6 py-3 rounded-full text-xs font-semibold bg-accent hover:bg-accent/90 text-white transition-all active:scale-[0.98] flex-1 text-center"
+                style={{
+                  boxShadow: '0 4px 12px var(--accent-glow)'
+                }}
+              >
+                {currentIndex === totalCards - 1 ? 'Complete deck ✓' : 'Got it →'}
+              </button>
+            </>
+          )}
         </div>
       </main>
     </div>

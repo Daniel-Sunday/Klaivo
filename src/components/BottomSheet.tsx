@@ -4,6 +4,7 @@ import { supabase, getProfile } from '../lib/supabase';
 import { generateAnswer, compressImage } from '../lib/api';
 import { buildStudyPrompt, analysePrompt } from '../lib/promptBuilder';
 import { analytics } from '../lib/analytics';
+import { haptic } from '../lib/haptic';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -326,6 +327,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
   }, [sheetState, isReadingImageState]);
 
   const handlePillSelect = (optionId: string) => {
+    haptic();
     const q = currentQuestions[currentQuestionIndex];
     const newAnswers = { ...answers, [q.id]: optionId };
     setAnswers(newAnswers);

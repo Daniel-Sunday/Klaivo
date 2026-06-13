@@ -116,7 +116,7 @@ export default function LandingPage() {
   const freePrice = pricing.currency === 'KSh' ? 'KSh 0' : `${pricing.currency}0`;
 
   return (
-    <div className="bg-surface-dim text-on-surface font-body antialiased selection:bg-primary selection:text-on-primary">
+    <div className="bg-surface-dim text-on-surface font-body antialiased selection:bg-primary selection:text-on-primary page-transition">
       <header
         className="fixed top-0 w-full z-50 bg-bg-primary/80 backdrop-blur-xl transition-all duration-300"
         style={{ paddingTop: 'calc(12px + var(--sat))' }}

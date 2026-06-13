@@ -48,10 +48,14 @@ function AppCrashFallback() {
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
 
+import { ToastProvider } from './context/ToastContext';
+
 createRoot(rootElement).render(
   <StrictMode>
     <Sentry.ErrorBoundary fallback={<AppCrashFallback />}>
-      <App />
+      <ToastProvider>
+        <App />
+      </ToastProvider>
     </Sentry.ErrorBoundary>
   </StrictMode>,
 );

@@ -8,6 +8,8 @@ import BottomSheet from '../components/BottomSheet';
 import SideDrawer from '../components/SideDrawer';
 import { compressImage } from '../lib/api';
 import { analytics } from '../lib/analytics';
+import { useToast } from '../context/ToastContext';
+import { haptic } from '../lib/haptic';
 
 const MODES = [
   { id: 'understand', label: 'Understand', icon: 'psychology' },
@@ -35,7 +37,7 @@ export default function WelcomePage() {
   const [uploadedImageBase64, setUploadedImageBase64] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const firstName = profile?.first_name || 'there';
 
@@ -53,7 +55,7 @@ export default function WelcomePage() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('upgraded') === 'true') {
       analytics.paymentCompleted('paystack', 'pro');
-      setToastMessage('◆ Welcome to Pro. No more limits.');
+      showToast('◆ Welcome to Pro. No more limits.', 'pro');
       window.history.replaceState({}, '', '/home');
 
       // Poll profile refresh from Supabase to ensure is_pro state propagates
@@ -72,16 +74,6 @@ export default function WelcomePage() {
       return () => clearInterval(interval);
     }
   }, [refreshProfile]);
-
-  // Toast automatic dismiss effect
-  useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => {
-        setToastMessage(null);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
 
   const greeting = getGreeting(firstName);
 
@@ -121,7 +113,7 @@ export default function WelcomePage() {
     // Max file size check: 10MB
     const MAX_SIZE = 10 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-      setToastMessage("Image too large — maximum 10MB");
+      showToast("Image too large — maximum 10MB", "error");
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -177,7 +169,7 @@ export default function WelcomePage() {
   };
 
   return (
-    <div className="bg-bg-primary text-text-body font-['Inter',sans-serif] antialiased min-h-screen flex flex-col selection:bg-accent selection:text-white">
+    <div className="bg-bg-primary text-text-body font-['Inter',sans-serif] antialiased min-h-screen flex flex-col selection:bg-accent selection:text-white page-transition">
       {/* Top Navigation */}
       <header
         className="fixed top-0 w-full z-50 bg-bg-primary/60 backdrop-blur-xl border-b border-border-subtle shadow-none"
@@ -227,7 +219,10 @@ export default function WelcomePage() {
             {MODES.map((mode) => (
               <button
                 key={mode.id}
-                onClick={() => setSelectedModeLocal(selectedMode === mode.id ? null : mode.id)}
+                onClick={() => {
+                  haptic();
+                  setSelectedModeLocal(selectedMode === mode.id ? null : mode.id);
+                }}
                 style={{
                   background: selectedMode === mode.id ? 'var(--accent-subtle)' : 'var(--bg-secondary)',
                   borderColor: selectedMode === mode.id ? 'var(--accent-border)' : 'var(--ghost-border)'
@@ -340,20 +335,6 @@ export default function WelcomePage() {
           <p className="text-text-body text-sm text-center">
             You've used your 3 answers for today. Come back tomorrow — or go unlimited with Klaivo Pro.
           </p>
-        </div>
-      )}
-
-      {/* Custom Alert/Error/Success Toast */}
-      {toastMessage && (
-        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low/90 backdrop-blur-md text-text-primary px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm border ${
-          toastMessage.startsWith('◆') ? 'border-primary/30' : 'border-danger/30'
-        }`}>
-          {toastMessage.startsWith('◆') ? (
-            <span className="material-symbols-outlined text-primary text-[20px]">workspace_premium</span>
-          ) : (
-            <span className="material-symbols-outlined text-danger text-[20px]">error</span>
-          )}
-          <span>{toastMessage}</span>
         </div>
       )}
     </div>

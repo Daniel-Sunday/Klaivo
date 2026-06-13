@@ -6,6 +6,7 @@ import { buildQuizPrompt } from '../lib/promptBuilder';
 import { useAuth } from '../context/AuthContext';
 import FreemiumGate from '../components/FreemiumGate';
 import { analytics } from '../lib/analytics';
+import { haptic } from '../lib/haptic';
 
 interface QuizQuestion {
   question: string;
@@ -103,7 +104,7 @@ export default function QuizPage() {
         }
       } catch (err: any) {
         console.error(err);
-        setError(err.message || 'Failed to generate quiz');
+        setError(err.message || "Something interrupted generating your quiz. Let's try again.");
       } finally {
         setGenerating(false);
       }
@@ -133,6 +134,7 @@ export default function QuizPage() {
 
   const handleSelectAnswer = (optionIndex: number) => {
     if (selectedAnswer !== null) return; // Already answered
+    haptic();
     setSelectedAnswer(optionIndex);
     const isCorrect = optionIndex === questions[currentIndex].correct_index;
     setAnswered(prev => [...prev, { selectedIndex: optionIndex, isCorrect }]);
@@ -216,7 +218,7 @@ export default function QuizPage() {
     return (
       <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center text-text-body font-['Inter',sans-serif] p-6 text-center">
         <span className="material-symbols-outlined text-danger text-5xl mb-4">error</span>
-        <h3 className="text-lg font-['Manrope',sans-serif] font-bold text-text-primary mb-2">Quiz Generation Failed</h3>
+        <h3 className="text-lg font-['Manrope',sans-serif] font-bold text-text-primary mb-2">Something interrupted generating your quiz</h3>
         <p className="text-sm text-text-body max-w-xs mb-6">{error || 'Could not generate quiz questions.'}</p>
         <button
           onClick={() => navigate(`/result/${sessionId}`)}
@@ -323,7 +325,7 @@ export default function QuizPage() {
   const hasAnswered = selectedAnswer !== null;
 
   return (
-    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white">
+    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white page-transition">
       {/* Header */}
       <header
         className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50"

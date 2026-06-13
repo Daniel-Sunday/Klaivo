@@ -110,7 +110,7 @@ export default function SharedResultPage() {
         <div className="bg-surface-low border border-ghost-border rounded-2xl p-8 max-w-sm w-full text-center space-y-4">
           <h2 className="text-lg font-bold text-text-primary">Shared Study Session Not Found</h2>
           <p className="text-sm text-text-secondary">
-            This link is invalid or the author has not enabled public sharing for this session.
+            Please check this link and try again, or it might be that the author has not enabled public sharing for this session.
           </p>
           <button
             onClick={() => navigate('/')}
@@ -127,7 +127,7 @@ export default function SharedResultPage() {
   const heroContent = session.result_json?.[heroKey] || '';
 
   return (
-    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white pt-12">
+    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white pt-12 page-transition">
       {/* Monogram Top Header */}
       <header className="px-6 py-4 flex flex-col items-center select-none">
         <button 
