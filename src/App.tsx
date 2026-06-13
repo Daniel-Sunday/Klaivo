@@ -40,6 +40,7 @@ const SharedResultPage = lazy(() => import('./pages/SharedResultPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function SplashLoader() {
   return (
@@ -98,12 +99,12 @@ export default function App() {
           <Suspense fallback={<SplashLoader />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
-              <Route path="/onboarding" element={<OnboardingPage />} />
-              <Route path="/welcome" element={<WelcomePage />} />
+              <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+              <Route path="/welcome" element={<ProtectedRoute><WelcomePage /></ProtectedRoute>} />
               <Route path="/home" element={<ProtectedRoute><WelcomePage /></ProtectedRoute>} />
               <Route path="/result/:sessionId" element={<ProtectedRoute><ResultPage /></ProtectedRoute>} />
               <Route path="/flashcards/:sessionId" element={<ProtectedRoute requirePro><FlashcardsPage /></ProtectedRoute>} />
-              <Route path="/quiz/:sessionId" element={<ProtectedRoute><QuizPage /></ProtectedRoute>} />
+              <Route path="/quiz/:sessionId" element={<ProtectedRoute requirePro><QuizPage /></ProtectedRoute>} />
               <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
               <Route path="/about" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
@@ -114,6 +115,7 @@ export default function App() {
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/s/:sessionId" element={<SharedResultPage />} />
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
 

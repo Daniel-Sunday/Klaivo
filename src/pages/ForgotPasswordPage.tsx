@@ -36,21 +36,13 @@ export default function ForgotPasswordPage() {
       className="min-h-screen flex flex-col items-center justify-center px-6"
       style={{ background: 'var(--bg-primary)' }}
     >
-      {/* K monogram */}
-      <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-10"
-        style={{
-          background: 'linear-gradient(135deg, var(--accent), #6C63FF)',
-          boxShadow: '0 0 40px rgba(79,142,247,0.15)',
-        }}
-      >
-        <span
-          className="text-2xl font-extrabold text-white select-none"
-          style={{ fontFamily: 'Manrope, sans-serif' }}
-        >
-          K
-        </span>
-      </div>
+      {/* Klaivo Logo */}
+      <img
+        src="/logo.svg"
+        alt="Klaivo"
+        className="w-16 h-16 k-breathe mb-10"
+        loading="lazy"
+      />
 
       {success ? (
         /* Success state */
