@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../hooks/useTheme';
+import { useToast } from '../context/ToastContext';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [isLevelSheetOpen, setIsLevelSheetOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     let active = true;
@@ -51,16 +52,7 @@ export default function SettingsPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => setToastMessage(null), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-  };
+  // Toast state and helper removed (now using useToast hook)
 
   const handleUpdateLevel = async (newLevel: string) => {
     try {
@@ -75,11 +67,11 @@ export default function SettingsPage() {
       if (error) throw error;
 
       setProfile((prev: any) => ({ ...prev, academic_level: newLevel }));
-      showToast('Level updated — your results will now reflect this');
+      showToast('Level updated — your results will now reflect this', 'success');
       setIsLevelSheetOpen(false);
     } catch (err: any) {
       console.error(err);
-      showToast(err.message || 'Failed to update level');
+      showToast(err.message || 'Failed to update level', 'error');
     }
   };
 
@@ -95,11 +87,12 @@ export default function SettingsPage() {
 
       if (error) throw error;
 
-      showToast('All your study data has been deleted.');
+      setProfile((prev: any) => prev ? { ...prev, daily_count: 0 } : null);
+      showToast('All your study data has been deleted.', 'success');
       setIsDeleteConfirmOpen(false);
     } catch (err: any) {
       console.error(err);
-      showToast(err.message || 'Failed to delete data');
+      showToast(err.message || 'Failed to delete data', 'error');
     }
   };
 
@@ -113,9 +106,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white">
-      {/* Header */}
-      <header className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50 pt-safe-top">
+    <div className="bg-bg-primary text-text-body min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white page-transition">
+      <header
+        className="border-b border-border-subtle bg-bg-primary/80 backdrop-blur-xl px-6 py-4 fixed top-0 w-full z-50"
+        style={{ paddingTop: 'calc(12px + var(--sat))' }}
+      >
         <div className="max-w-xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
@@ -304,14 +299,6 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Custom Alert/Error Toast */}
-      {toastMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low/90 backdrop-blur-md border border-accent/30 text-text-primary px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm font-body">
-          <span className="material-symbols-outlined text-accent text-[20px]">info</span>
-          <span>{toastMessage}</span>
         </div>
       )}
     </div>

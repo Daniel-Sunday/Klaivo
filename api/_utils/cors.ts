@@ -1,8 +1,7 @@
 const ALLOWED_ORIGINS = [
   'https://klaivo.app',
-  'https://klaivo.vercel.app',
-  'http://localhost:3000',
   'http://localhost:5173',
+  'http://localhost:5174',
 ];
 
 export function getCorsHeaders(req: Request): Record<string, string> {

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { haptic } from '../lib/haptic';
 
 const ACADEMIC_LEVELS = [
   'Secondary School',
@@ -69,6 +70,7 @@ export default function OnboardingPage() {
   };
 
   const handleLevelSelect = async (level: string) => {
+    haptic();
     setSelectedLevel(level);
 
     if (session?.user) {
@@ -184,7 +186,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen bg-bg-primary text-text-primary flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <main id="main-content" className="min-h-screen bg-bg-primary text-text-primary flex flex-col items-center justify-center p-6 relative overflow-hidden page-transition">
       {screen === 1 && (
         <div className="flex flex-col items-center justify-center space-y-8 text-center">
           <div className="relative">

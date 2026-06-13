@@ -24,7 +24,11 @@ export function ProtectedRoute({ children, requirePro = false, requireAdmin = fa
       <img src="/logo.svg" alt="Klaivo" className="w-16 h-16 k-breathe" loading="lazy" />
     </div>
   );
-  if (!profile.onboarding_complete) return <Navigate to="/onboarding" replace />;
+  
+  const pathname = window.location.pathname;
+  if (!profile.onboarding_complete && pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
   if (requireAdmin && profile.role !== 'admin') return <Navigate to="/home" replace />;
   if (requirePro && !isUserPro(profile)) return <Navigate to="/upgrade" replace />;
   return <>{children}</>;

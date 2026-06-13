@@ -2,6 +2,8 @@ export const config = { runtime: 'edge' };
 
 import { getCorsHeaders, handleCors } from './_utils/cors';
 import { createClient } from '@supabase/supabase-js';
+import { checkAndIncrementRateLimit } from './_utils/rateLimit';
+import { sanitizeInput } from './_utils/sanitize';
 
 export default async function handler(req: Request): Promise<Response> {
   // Handle CORS preflight
@@ -46,14 +48,39 @@ export default async function handler(req: Request): Promise<Response> {
       });
     }
 
+    // Rate Limiting Check
+    const { allowed } = await checkAndIncrementRateLimit(supabaseClient, user.id);
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'RATE_LIMIT_EXCEEDED' }), {
+        status: 429,
+        headers: { ...cors, 'Content-Type': 'application/json' }
+      });
+    }
+
     // 2. Parse request JSON body
     const body = await req.json();
-    const { systemPrompt, userMessage, imageBase64 } = body;
+    const { systemPrompt, userMessage, imageBase64, topic, essayQuestion, essay_question } = body;
 
     if (!systemPrompt || !userMessage) {
       return new Response(JSON.stringify({ error: 'systemPrompt and userMessage are required fields' }), { 
         status: 400, 
         headers: { ...cors, 'Content-Type': 'application/json' } 
+      });
+    }
+
+    // Input Sanitization
+    try {
+      if (topic) {
+        sanitizeInput(topic, 500);
+      }
+      const essayQ = essayQuestion || essay_question;
+      if (essayQ) {
+        sanitizeInput(essayQ, 2000);
+      }
+    } catch (e: any) {
+      return new Response(JSON.stringify({ error: 'INVALID_INPUT' }), {
+        status: 400,
+        headers: { ...cors, 'Content-Type': 'application/json' }
       });
     }
 
@@ -86,6 +113,7 @@ export default async function handler(req: Request): Promise<Response> {
         }
       ],
       generationConfig: {
+        responseMimeType: 'application/json',
         thinkingConfig: {
           thinkingBudget: 0
         }

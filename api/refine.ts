@@ -3,6 +3,7 @@ export const config = { runtime: 'edge' };
 import { verifyAuth } from './_utils/auth';
 import { checkAndIncrementRateLimit } from './_utils/rateLimit';
 import { getCorsHeaders, handleCors } from './_utils/cors';
+import { sanitizeInput } from './_utils/sanitize';
 
 const SCHEMAS: Record<string, string> = {
   UNDERSTAND: `{
@@ -61,6 +62,9 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const { type, topic, mode, level, existingFullAnswer, mode_schema } = await req.json();
+    if (topic) {
+      sanitizeInput(topic, 500);
+    }
 
     const schemaDefinition = SCHEMAS[mode_schema] || SCHEMAS.UNDERSTAND;
     const systemPrompt = type === 'simplify'
@@ -81,6 +85,7 @@ export default async function handler(req: Request): Promise<Response> {
           contents: [{ role: 'user', parts: [{ text: userMessage }] }],
           generationConfig: {
             maxOutputTokens: maxTokens,
+            responseMimeType: 'application/json',
             thinkingConfig: {
               thinkingBudget: 0
             }

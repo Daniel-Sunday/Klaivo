@@ -48,10 +48,19 @@ function AppCrashFallback() {
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
 
+import { ToastProvider } from './context/ToastContext';
+
 createRoot(rootElement).render(
   <StrictMode>
     <Sentry.ErrorBoundary fallback={<AppCrashFallback />}>
-      <App />
+      <ToastProvider>
+        <App />
+      </ToastProvider>
     </Sentry.ErrorBoundary>
   </StrictMode>,
 );
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  navigator.serviceWorker.register('/service-worker.ts')
+    .catch(err => console.warn('SW registration failed:', err))
+}

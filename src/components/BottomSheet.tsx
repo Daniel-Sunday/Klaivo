@@ -4,6 +4,7 @@ import { supabase, getProfile } from '../lib/supabase';
 import { generateAnswer, compressImage } from '../lib/api';
 import { buildStudyPrompt, analysePrompt } from '../lib/promptBuilder';
 import { analytics } from '../lib/analytics';
+import { haptic } from '../lib/haptic';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -326,6 +327,7 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
   }, [sheetState, isReadingImageState]);
 
   const handlePillSelect = (optionId: string) => {
+    haptic();
     const q = currentQuestions[currentQuestionIndex];
     const newAnswers = { ...answers, [q.id]: optionId };
     setAnswers(newAnswers);
@@ -499,7 +501,8 @@ export default function BottomSheet({ isOpen, onClose, topic, selectedMode, uplo
         role="dialog"
         aria-modal="true"
         aria-label="Study setup sheet"
-        className="relative bg-surface w-full max-w-lg rounded-t-3xl p-6 pb-8 pb-safe-bottom border-t border-white/10 z-10 transition-transform duration-300"
+        className="relative bg-surface w-full max-w-lg rounded-t-3xl p-6 pb-8 border-t border-white/10 z-10 transition-transform duration-300"
+        style={{ paddingBottom: 'calc(16px + var(--sab))' }}
       >
         <div className="w-12 h-1 bg-text-secondary rounded-full mx-auto mb-6" />
         

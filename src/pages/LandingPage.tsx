@@ -116,8 +116,11 @@ export default function LandingPage() {
   const freePrice = pricing.currency === 'KSh' ? 'KSh 0' : `${pricing.currency}0`;
 
   return (
-    <div className="bg-surface-dim text-on-surface font-body antialiased selection:bg-primary selection:text-on-primary">
-      <header className="fixed top-0 w-full z-50 bg-bg-primary/80 backdrop-blur-xl transition-all duration-300 pt-safe-top">
+    <div className="bg-surface-dim text-on-surface font-body antialiased selection:bg-primary selection:text-on-primary page-transition">
+      <header
+        className="fixed top-0 w-full z-50 bg-bg-primary/80 backdrop-blur-xl transition-all duration-300"
+        style={{ paddingTop: 'calc(12px + var(--sat))' }}
+      >
         <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
             <span className="text-xl font-bold tracking-tighter text-text-primary font-headline">
@@ -230,6 +233,15 @@ export default function LandingPage() {
                 {authMessage}
               </p>
             )}
+            <div className="text-center pt-1">
+              <Link
+                to="/forgot-password"
+                className="text-xs hover:underline transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Forgot password?
+              </Link>
+            </div>
             <p className="text-xs text-text-secondary pt-4 leading-relaxed">
               By continuing, you agree to Klaivo&apos;s{' '}
               <Link className="underline hover:text-text-body transition-colors" to="/terms">

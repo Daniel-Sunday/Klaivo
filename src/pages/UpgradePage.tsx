@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useToast } from '../context/ToastContext';
 
 /* ──────────────────────── Types ──────────────────────── */
 type Geo = 'NG' | 'INT';
@@ -87,19 +88,8 @@ export default function UpgradePage() {
   const [geo, setGeo] = useState<Geo>('INT');
   const [selectedPlan, setSelectedPlan] = useState<string>('annual_int');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [processing, setProcessing] = useState(false);
-
-  useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => {
-        setToastMessage(null);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
-
-  const showToast = (msg: string) => setToastMessage(msg);
 
   useEffect(() => {
     detectGeo().then((g) => {
@@ -127,10 +117,30 @@ export default function UpgradePage() {
       const planCode = selectedPlan.split('_')[0];
 
       if (geo === 'NG') {
-        await initiatePaystackPayment({ email, plan: planCode, userId });
-        showToast('Payment processing... your Pro access will activate shortly.');
-        await refreshProfile();
-        navigate('/home?upgraded=true');
+        const paystackResult = await initiatePaystackPayment({ email, plan: planCode, userId });
+        showToast('Verifying payment...');
+        
+        // Get JWT token for authentication
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        const verifyRes = await fetch('/api/payments/verify-paystack', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token || ''}`,
+          },
+          body: JSON.stringify({ reference: paystackResult.reference, plan: planCode })
+        });
+
+        if (verifyRes.ok) {
+          showToast('◆ Welcome to Pro. No more limits.');
+          await refreshProfile();
+          navigate('/home');
+        } else {
+          showToast('Payment verification pending. Your Pro access will activate shortly.');
+          navigate('/home?upgraded=true');
+        }
       } else {
         await initiateStripeCheckout({ email, plan: planCode, userId });
       }
@@ -145,13 +155,17 @@ export default function UpgradePage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white"
+      className="min-h-screen flex flex-col font-['Inter',sans-serif] selection:bg-accent selection:text-white page-transition"
       style={{ background: 'var(--bg-primary)', color: 'var(--text-body)' }}
     >
       {/* ─── Top Bar ─── */}
       <header
         className="border-b px-6 py-4 fixed top-0 w-full z-50 backdrop-blur-xl"
-        style={{ borderColor: 'var(--border-subtle)', background: 'color-mix(in srgb, var(--bg-primary) 80%, transparent)' }}
+        style={{
+          borderColor: 'var(--border-subtle)',
+          background: 'color-mix(in srgb, var(--bg-primary) 80%, transparent)',
+          paddingTop: 'calc(12px + var(--sat))',
+        }}
       >
         <div className="max-w-2xl mx-auto flex items-center justify-center relative">
           <button
@@ -331,14 +345,6 @@ export default function UpgradePage() {
           </div>
         </section>
       </main>
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-surface-low/90 backdrop-blur-md border border-primary/30 text-text-primary px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2.5 transition-all duration-300 font-medium text-sm">
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
-          <span>{toastMessage}</span>
-        </div>
-      )}
     </div>
   );
 }
