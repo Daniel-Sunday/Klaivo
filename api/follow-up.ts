@@ -27,6 +27,9 @@ export default async function handler(req: Request): Promise<Response> {
 
     const { question, originalFullAnswer, originalTopic, conversationHistory = [] } = await req.json();
     const cleanQuestion = sanitizeInput(question, 500);
+    if (originalTopic) {
+      sanitizeInput(originalTopic, 500);
+    }
 
     const { allowed } = await checkAndIncrementRateLimit(supabase, user.id);
     if (!allowed) {
