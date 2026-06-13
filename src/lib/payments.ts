@@ -16,10 +16,10 @@ const PLANS: Record<string, Record<string, { amount?: number; priceId?: string; 
     annual:    { amount: 17000000, label: '₦170,000 — 12 months',     period: 'annual' },
   },
   INT: {
-    trial:     { priceId: 'price_trial_id',     label: '$3 — 7 days',          period: 'trial' },
-    monthly:   { priceId: 'price_monthly_id',   label: '$15/month',             period: 'monthly' },
-    quarterly: { priceId: 'price_quarterly_id', label: '$39 — 3 months',        period: 'quarterly' },
-    annual:    { priceId: 'price_annual_id',     label: '$150 — 12 months',     period: 'annual' },
+    trial:     { priceId: import.meta.env.VITE_STRIPE_PRICE_TRIAL || 'price_trial_id',     label: '$3 — 7 days',          period: 'trial' },
+    monthly:   { priceId: import.meta.env.VITE_STRIPE_PRICE_MONTHLY || 'price_monthly_id',   label: '$15/month',             period: 'monthly' },
+    quarterly: { priceId: import.meta.env.VITE_STRIPE_PRICE_QUARTERLY || 'price_quarterly_id', label: '$39 — 3 months',        period: 'quarterly' },
+    annual:    { priceId: import.meta.env.VITE_STRIPE_PRICE_ANNUAL || 'price_annual_id',     label: '$150 — 12 months',     period: 'annual' },
   }
 };
 

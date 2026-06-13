@@ -127,10 +127,30 @@ export default function UpgradePage() {
       const planCode = selectedPlan.split('_')[0];
 
       if (geo === 'NG') {
-        await initiatePaystackPayment({ email, plan: planCode, userId });
-        showToast('Payment processing... your Pro access will activate shortly.');
-        await refreshProfile();
-        navigate('/home?upgraded=true');
+        const paystackResult = await initiatePaystackPayment({ email, plan: planCode, userId });
+        showToast('Verifying payment...');
+        
+        // Get JWT token for authentication
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        const verifyRes = await fetch('/api/payments/verify-paystack', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token || ''}`,
+          },
+          body: JSON.stringify({ reference: paystackResult.reference, plan: planCode })
+        });
+
+        if (verifyRes.ok) {
+          showToast('◆ Welcome to Pro. No more limits.');
+          await refreshProfile();
+          navigate('/home');
+        } else {
+          showToast('Payment verification pending. Your Pro access will activate shortly.');
+          navigate('/home?upgraded=true');
+        }
       } else {
         await initiateStripeCheckout({ email, plan: planCode, userId });
       }
